@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pecuária Simulator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1710;--bg2:#1a2b1c;--bg3:#243626;--bg4:#2e4230;
+  --text:#e8f0e0;--text2:#a8b89a;--text3:#6b7d60;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.15);
+  --green:#5a9e3a;--green-bg:rgba(90,158,58,0.15);--green-t:#8fd468;
+  --red:#c94040;--red-bg:rgba(201,64,64,0.15);--red-t:#f07070;
+  --amber:#c87820;--amber-bg:rgba(200,120,32,0.15);--amber-t:#f0a840;
+  --blue:#2878c8;--blue-bg:rgba(40,120,200,0.15);--blue-t:#60a8f0;
+  --purple:#7858c8;--purple-bg:rgba(120,88,200,0.15);--purple-t:#a888f0;
+  --teal:#289878;--teal-bg:rgba(40,152,120,0.15);--teal-t:#50c8a0;
+  --gold:#c8a020;--gold-bg:rgba(200,160,32,0.15);--gold-t:#f0c840;
+  --r:6px;--rl:10px;
+  --font:'Segoe UI',system-ui,sans-serif;
+}
+body{font-family:var(--font);font-size:13px;color:var(--text);background:var(--bg);min-height:100vh;overflow-x:hidden}
+#app{max-width:1100px;margin:0 auto;padding:12px}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--rl);margin-bottom:10px}
+.logo{font-size:18px;font-weight:700;color:var(--green-t);letter-spacing:.05em;flex-shrink:0}
+.logo span{color:var(--amber-t)}
+.hud-metrics{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+.hm{display:flex;align-items:center;gap:5px;background:var(--bg3);border-radius:var(--r);padding:5px 10px;font-size:12px}
+.hm-icon{font-size:14px}
+.hm-val{font-weight:500;color:var(--text)}
+.hm-lbl{color:var(--text3);font-size:10px}
+.hdr-day{font-size:11px;color:var(--text3);text-align:right;flex-shrink:0}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:200px 1fr;gap:10px}
+@media(max-width:700px){.layout{grid-template-columns:1fr}}
+
+/* SIDEBAR NAV */
+.sidenav{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rl);padding:8px;display:flex;flex-direction:column;gap:2px}
+.snav-section{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding:8px 8px 4px;margin-top:4px}
+.snav-section:first-child{margin-top:0}
+.snv{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;border:none;background:transparent;width:100%;text-align:left;transition:background .15s}
+.snv:hover{background:var(--bg3);color:var(--text)}
+.snv.on{background:var(--green-bg);color:var(--green-t);font-weight:500}
+.snv-icon{font-size:15px;width:18px;text-align:center}
+.snv-badge{margin-left:auto;background:var(--red-bg);color:var(--red-t);font-size:10px;padding:1px 5px;border-radius:10px}
+
+/* PANELS */
+.panel{display:none}.panel.on{display:block}
+.sec{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rl);padding:14px;margin-bottom:10px}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sec-title{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);font-weight:500}
+
+/* BUTTONS */
+button{font-family:var(--font);font-size:12px;padding:6px 12px;border:0.5px solid var(--border2);border-radius:var(--r);background:transparent;color:var(--text);cursor:pointer;transition:all .15s}
+button:hover{background:var(--bg3);color:var(--text)}
+button:active{transform:scale(.97)}
+button:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--green-bg);border-color:var(--green);color:var(--green-t)}
+.btn-primary:hover{background:rgba(90,158,58,0.25)}
+.btn-danger{background:var(--red-bg);border-color:var(--red);color:var(--red-t)}
+.btn-amber{background:var(--amber-bg);border-color:var(--amber);color:var(--amber-t)}
+.btn-blue{background:var(--blue-bg);border-color:var(--blue);color:var(--blue-t)}
+.btn-gold{background:var(--gold-bg);border-color:var(--gold);color:var(--gold-t)}
+
+/* CHIPS */
+.chip{font-size:10px;padding:2px 6px;border-radius:var(--r);font-weight:500;display:inline-block}
+.c-ok{background:var(--green-bg);color:var(--green-t)}
+.c-warn{background:var(--amber-bg);color:var(--amber-t)}
+.c-err{background:var(--red-bg);color:var(--red-t)}
+.c-blue{background:var(--blue-bg);color:var(--blue-t)}
+.c-purple{background:var(--purple-bg);color:var(--purple-t)}
+.c-teal{background:var(--teal-bg);color:var(--teal-t)}
+.c-gold{background:var(--gold-bg);color:var(--gold-t)}
+
+/* CATTLE GRID */
+.cattle-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
+.cow-card{border:0.5px solid var(--border);border-radius:var(--r);padding:8px 6px;cursor:pointer;background:var(--bg3);transition:all .15s;position:relative;text-align:center}
+.cow-card:hover{border-color:var(--border2);background:var(--bg4)}
+.cow-card.sel{border-color:var(--green);background:var(--green-bg)}
+.cow-card.sick{border-color:var(--red);background:var(--red-bg)}
+.cow-card.pregnant{border-color:var(--purple)}
+.cow-icon{font-size:22px;margin-bottom:3px}
+.cow-name{font-size:9px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cow-info{font-size:9px;color:var(--text3);margin-top:1px}
+.cow-phase{margin-top:3px}
+.bw{height:3px;background:var(--border);border-radius:2px;margin-top:3px}
+.bf{height:100%;border-radius:2px;transition:width .4s}
+.dot-milk{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--blue)}
+.dot-done{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--green)}
+.dot-preg{position:absolute;top:4px;left:4px;width:7px;height:7px;border-radius:50%;background:var(--purple)}
+
+/* TABLE DETAIL */
+.dr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--border)}
+.dr:last-child{border-bottom:none}
+.dr-lbl{color:var(--text2);font-size:12px}
+.dp{background:var(--bg3);border-radius:var(--r);padding:12px;margin-top:8px}
+
+/* METRICS */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.metric-card{background:var(--bg3);border-radius:var(--r);padding:10px 12px}
+.metric-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.metric-val{font-size:20px;font-weight:500}
+.metric-sub{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* PROGRESS BARS */
+.prog-wrap{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width .4s}
+
+/* MARKET */
+.market-item{display:flex;align-items:center;gap:10px;padding:8px;border:0.5px solid var(--border);border-radius:var(--r);margin-bottom:6px;background:var(--bg3)}
+.price-trend{font-size:11px}
+.trend-up{color:var(--green-t)}
+.trend-down{color:var(--red-t)}
+
+/* SHOP GRID */
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.shop-card{border:0.5px solid var(--border);border-radius:var(--rl);padding:12px;background:var(--bg3)}
+.shop-icon{font-size:24px;margin-bottom:6px}
+.shop-name{font-weight:500;font-size:13px;margin-bottom:2px}
+.shop-desc{font-size:11px;color:var(--text2);margin-bottom:6px;line-height:1.5}
+.shop-price{font-size:12px;color:var(--amber-t);margin-bottom:6px;font-weight:500}
+
+/* BUILDS */
+.build-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.build-card{border:0.5px solid var(--border);border-radius:var(--rl);padding:12px;background:var(--bg3)}
+.build-card.built{border-color:var(--green);opacity:.85}
+
+/* MISSIONS */
+.mission{display:flex;align-items:center;gap:10px;padding:10px;border:0.5px solid var(--border);border-radius:var(--r);margin-bottom:6px;background:var(--bg3)}
+.mission.done{border-color:var(--green);opacity:.7}
+.mission-info{flex:1;min-width:0}
+.mission-name{font-weight:500;font-size:13px}
+.mission-desc{font-size:11px;color:var(--text2);margin-top:1px}
+.mission-reward{font-size:11px;color:var(--gold-t);margin-top:2px}
+
+/* LOG */
+.log-box{max-height:120px;overflow-y:auto;font-size:11px;color:var(--text2);line-height:1.9}
+.log-line{border-bottom:0.5px solid var(--border);padding:1px 0}
+.log-line.alert{color:var(--red-t)}
+.log-line.good{color:var(--green-t)}
+.log-line.info{color:var(--blue-t)}
+
+/* NOTIF */
+.notif{padding:8px 14px;border-radius:var(--r);font-size:12px;margin-bottom:8px;display:none;position:sticky;top:10px;z-index:100}
+.notif.show{display:block}
+.n-ok{background:var(--green-bg);color:var(--green-t);border:0.5px solid var(--green)}
+.n-warn{background:var(--amber-bg);color:var(--amber-t);border:0.5px solid var(--amber)}
+.n-err{background:var(--red-bg);color:var(--red-t);border:0.5px solid var(--red)}
+.n-gold{background:var(--gold-bg);color:var(--gold-t);border:0.5px solid var(--gold)}
+
+/* WEATHER */
+.weather-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg3);border-radius:var(--r);margin-bottom:10px;font-size:12px}
+.season-badge{font-size:10px;padding:2px 8px;border-radius:var(--r);margin-left:auto}
+
+/* PHASE BAR */
+.phase-summary{display:flex;gap:6px;margin-bottom:10px}
+.ph-block{flex:1;padding:6px 4px;border-radius:var(--r);text-align:center;font-size:10px;border:0.5px solid var(--border)}
+.ph-num{font-size:16px;font-weight:500;display:block}
+
+/* FINANCE TABLE */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:6px 8px;color:var(--text3);font-weight:400;border-bottom:0.5px solid var(--border2);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+td{padding:6px 8px;border-bottom:0.5px solid var(--border)}
+.td-right{text-align:right}
+
+/* PASTURE MAP */
+.pasture-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:10px}
+.pq{aspect-ratio:1;border-radius:var(--r);border:0.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:10px;transition:all .15s;position:relative}
+.pq:hover{border-color:var(--border2)}
+.pq.selected{border-color:var(--green)}
+.pq-label{font-size:9px;text-align:center;color:var(--text2);margin-top:2px}
+
+/* TOOLTIP */
+.tooltip-wrap{position:relative;display:inline-block}
+.tooltip-wrap:hover .tt{display:block}
+.tt{display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:var(--bg4);border:0.5px solid var(--border2);border-radius:var(--r);padding:6px 10px;font-size:11px;white-space:nowrap;z-index:200;pointer-events:none}
+
+/* RANK */
+.rank-item{display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg3);border-radius:var(--r);margin-bottom:5px}
+.rank-pos{font-size:16px;font-weight:700;width:28px;text-align:center}
+
+footer{text-align:center;font-size:11px;color:var(--text3);margin-top:20px;padding-top:12px;border-top:0.5px solid var(--border)}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="notif" class="notif"></div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="logo">PECUÁRIA<span>SIM</span></div>
+  <div class="hud-metrics" id="hud-metrics"></div>
+  <div class="hdr-day" id="hdr-day"></div>
+</div>
+
+<!-- WEATHER -->
+<div class="weather-bar" id="weather-bar"></div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidenav">
+    <div class="snav-section">Produção</div>
+    <button class="snv on" onclick="showTab('rebanho')"><span class="snv-icon">🐄</span>Rebanho<span id="badge-sick" class="snv-badge" style="display:none">!</span></button>
+    <button class="snv" onclick="showTab('pastagem')"><span class="snv-icon">🌿</span>Pastagens</button>
+    <button class="snv" onclick="showTab('nutricao')"><span class="snv-icon">🌾</span>Nutrição</button>
+    <button class="snv" onclick="showTab('reproducao')"><span class="snv-icon">🧬</span>Reprodução</button>
+    <div class="snav-section">Gestão</div>
+    <button class="snv" onclick="showTab('fazenda')"><span class="snv-icon">🏠</span>Fazenda</button>
+    <button class="snv" onclick="showTab('maquinas')"><span class="snv-icon">🚜</span>Máquinas</button>
+    <button class="snv" onclick="showTab('funcionarios')"><span class="snv-icon">👷</span>Funcionários</button>
+    <div class="snav-section">Mercado</div>
+    <button class="snv" onclick="showTab('mercado')"><span class="snv-icon">📊</span>Mercado</button>
+    <button class="snv" onclick="showTab('loja')"><span class="snv-icon">🛒</span>Loja</button>
+    <button class="snv" onclick="showTab('financas')"><span class="snv-icon">💰</span>Finanças</button>
+    <div class="snav-section">Mais</div>
+    <button class="snv" onclick="showTab('veterinario')"><span class="snv-icon">💉</span>Veterinário<span id="badge-vet" class="snv-badge" style="display:none">!</span></button>
+    <button class="snv" onclick="showTab('missoes')"><span class="snv-icon">🎯</span>Missões</button>
+    <button class="snv" onclick="showTab('ranking')"><span class="snv-icon">🏆</span>Ranking</button>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="main-content">
+
+    <!-- ===== REBANHO ===== -->
+    <div id="tab-rebanho" class="panel on">
+      <div class="sec">
+        <div class="sec-hdr">
+          <span class="sec-title">Rebanho — <span id="herd-count">0</span> animais</span>
+          <div style="display:flex;gap:6px">
+            <button onclick="actAll('alimentar')" class="btn-primary">Alimentar todos</button>
+            <button onclick="actAll('ordenhar')" class="btn-blue">Ordenhar vacas</button>
+            <button onclick="actAll('vender-leite')" class="btn-amber">Vender leite</button>
+            <button onclick="nextDay()" style="font-weight:500;padding:6px 16px">Próximo dia →</button>
+          </div>
+        </div>
+        <div class="phase-summary" id="phase-summary"></div>
+        <div class="cattle-grid" id="cattle-grid"></div>
+        <div id="animal-detail"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-title">Registro do dia</div>
+        <div class="log-box" id="log-box"></div>
+      </div>
+    </div>
+
+    <!-- ===== PASTAGEM ===== -->
+    <div id="tab-pastagem" class="panel">
+      <div class="sec">
+        <div class="sec-hdr"><span class="sec-title">Mapa de piquetes</span>
+          <button onclick="addPiquete()" class="btn-primary">+ Novo piquete (R$500)</button>
+        </div>
+        <div class="pasture-grid" id="pasture-grid"></div>
+        <div id="piquete-detail"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-title">Manejo de pastagem</div>
+        <div id="pasture-manage"></div>
+      </div>
+    </div>
+
+    <!-- ===== NUTRIÇÃO ===== -->
+    <div id="tab-nutricao" class="panel">
+      <div class="sec">
+        <div class="sec-title">Estoque de insumos</div>
+        <div id="nutri-stock"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-title">Dietas por categoria</div>
+        <div id="dieta-config"></div>
+      </div>
+    </div>
+
+    <!-- ===== REPRODUÇÃO ===== -->
+    <div id="tab-reproducao" class="panel">
+      <div class="sec">
+        <div class="sec-hdr"><span class="sec-title">Reprodução e genética</span></div>
+        <div id="reprod-panel"></div>
+      </div>
+    </div>
+
+    <!-- ===== FAZENDA ===== -->
+    <div id="tab-fazenda" class="panel">
+      <div class="sec">
+        <div class="sec-title">Infraestrutura instalada</div>
+        <div class="build-grid" id="build-installed"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-title">Construções disponíveis</div>
+        <div class="build-grid" id="build-available"></div>
+      </div>
+    </div>
+
+    <!-- ===== MÁQUINAS ===== -->
+    <div id="tab-maquinas" class="panel">
+      <div class="sec">
+        <div class="sec-title">Equipamentos</div>
+        <div id="machines-panel"></div>
+      </div>
+    </div>
+
+    <!-- ===== FUNCIONÁRIOS ===== -->
+    <div id="tab-funcionarios" class="panel">
+      <div class="sec">
+        <div class="sec-title">Equipe atual</div>
+        <div id="staff-panel"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-title">Contratar</div>
+        <div class="shop-grid" id="hire-panel"></div>
+      </div>
+    </div>
+
+    <!-- ===== MERCADO ===== -->
+    <div id="tab-mercado" class="panel">
+      <div class="sec">
+        <div class="sec-title">Preços de mercado — atualizado diariamente</div>
+        <div id="market-prices"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-hdr"><span class="sec-title">Contratos ativos</span>
+          <button onclick="showContracts()" class="btn-blue">Ver ofertas</button>
+        </div>
+        <div id="contracts-panel"></div>
+      </div>
+    </div>
+
+    <!-- ===== LOJA ===== -->
+    <div id="tab-loja" class="panel">
+      <div class="sec">
+        <div class="sec-title">Comprar animais</div>
+        <div class="shop-grid" id="shop-animals"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-title">Insumos e medicamentos</div>
+        <div class="shop-grid" id="shop-insumos"></div>
+      </div>
+    </div>
+
+    <!-- ===== FINANÇAS ===== -->
+    <div id="tab-financas" class="panel">
+      <div class="metrics-grid" style="margin-bottom:10px" id="finance-metrics"></div>
+      <div class="sec">
+        <div class="sec-title">Histórico mensal</div>
+        <div id="finance-history"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-hdr"><span class="sec-title">Financiamento rural</span></div>
+        <div id="finance-loans"></div>
+      </div>
+    </div>
+
+    <!-- ===== VETERINÁRIO ===== -->
+    <div id="tab-veterinario" class="panel">
+      <div class="sec">
+        <div class="sec-title">Animais doentes</div>
+        <div id="vet-sick"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-title">Calendário sanitário</div>
+        <div id="vet-calendar"></div>
+      </div>
+    </div>
+
+    <!-- ===== MISSÕES ===== -->
+    <div id="tab-missoes" class="panel">
+      <div class="sec">
+        <div class="sec-title">Missões ativas</div>
+        <div id="missions-active"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-title">Missões concluídas</div>
+        <div id="missions-done"></div>
+      </div>
+    </div>
+
+    <!-- ===== RANKING ===== -->
+    <div id="tab-ranking" class="panel">
+      <div class="sec">
+        <div class="sec-title">Ranking regional</div>
+        <div id="ranking-panel"></div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /layout -->
+
+<footer>PECUÁRIA SIMULATOR · Simulação de Fazenda e Pecuária</footer>
+</div>
+
+<script>
+// ============================================================
+// DATA DEFINITIONS
+// ============================================================
+const SEASONS=[
+  {name:'Verão',icon:'☀',desc:'Calor intenso. Risco de estresse térmico.',pastureMod:0.7,milkMod:0.9,sickMod:1.1,weightMod:0.95},
+  {name:'Outono',icon:'🍂',desc:'Clima ameno. Boa produção.',pastureMod:1.0,milkMod:1.0,sickMod:0.9,weightMod:1.0},
+  {name:'Inverno',icon:'❄',desc:'Pasto lento. Mais ração necessária.',pastureMod:0.4,milkMod:0.85,sickMod:1.3,weightMod:0.85},
+  {name:'Primavera',icon:'🌿',desc:'Pasto abundante. Alta produção.',pastureMod:1.3,milkMod:1.1,sickMod:0.8,weightMod:1.1}
+];
+const WEATHERS=[
+  {name:'Ensolarado',icon:'☀️',pastureMod:0.9,milkMod:1.0,sickChance:0},
+  {name:'Nublado',icon:'⛅',pastureMod:1.0,milkMod:1.0,sickChance:0},
+  {name:'Chuvoso',icon:'🌧️',pastureMod:1.3,milkMod:0.95,sickChance:0.04},
+  {name:'Tempestade',icon:'⛈️',pastureMod:0.5,milkMod:0.8,sickChance:0.08},
+  {name:'Seca',icon:'🏜️',pastureMod:0.2,milkMod:0.75,sickChance:0.02}
+];
+const PHASES=[
+  {key:'bezerro',label:'Bezerro',min:0,max:90,icon:'🐣',chipClass:'c-purple',priceMult:0.4},
+  {key:'garrote',label:'Garrote',min:91,max:270,icon:'🐄',chipClass:'c-blue',priceMult:0.7},
+  {key:'recria',label:'Recria',min:271,max:450,icon:'🐂',chipClass:'c-warn',priceMult:0.85},
+  {key:'engorda',label:'Engorda',min:451,max:600,icon:'🐂',chipClass:'c-teal',priceMult:1.1},
+  {key:'adulto',label:'Adulto',min:601,max:9999,icon:'🐄',chipClass:'c-ok',priceMult:1.0}
+];
+const BREEDS={
+  nelore:{name:'Nelore',icon:'🐄',sexo:'F',milk:6,basePeso:180,pesoMax:500,gainDay:0.75,resist:0.9,fertility:0.85,buyCost:800,desc:'Raça nacional. Rústica e resistente.',heatResist:1.3},
+  neloreM:{name:'Nelore Macho',icon:'🐂',sexo:'M',milk:0,basePeso:200,pesoMax:560,gainDay:0.95,resist:0.9,fertility:0,buyCost:900,desc:'Excelente para engorda e corte.',heatResist:1.3},
+  angus:{name:'Angus',icon:'🐂',sexo:'M',milk:0,basePeso:220,pesoMax:620,gainDay:1.1,resist:0.75,fertility:0,buyCost:1400,desc:'Carne premium. Ganho de peso excepcional.',heatResist:0.7},
+  holandesa:{name:'Holandesa',icon:'🐄',sexo:'F',milk:18,basePeso:160,pesoMax:480,gainDay:0.55,resist:0.65,fertility:0.8,buyCost:1800,desc:'Maior produção leiteira. Exige cuidados.',heatResist:0.6},
+  girolandoF:{name:'Girolando',icon:'🐄',sexo:'F',milk:12,basePeso:170,pesoMax:490,gainDay:0.65,resist:0.85,fertility:0.88,buyCost:1200,desc:'Leiteiro adaptado ao Brasil.',heatResist:1.1},
+  touro:{name:'Touro Nelore',icon:'🐃',sexo:'M',milk:0,basePeso:350,pesoMax:720,gainDay:0.3,resist:0.95,fertility:0,buyCost:3500,desc:'Reprodutor. Cobre até 30 fêmeas.',heatResist:1.3},
+  touroBraford:{name:'Touro Braford',icon:'🐃',sexo:'M',milk:0,basePeso:380,pesoMax:780,gainDay:0.25,resist:0.9,fertility:0,buyCost:5000,desc:'Genética superior. Filhos mais pesados.',heatResist:1.1},
+};
+const BUILDINGS={
+  curral:{name:'Curral básico',icon:'🪵',cost:2000,desc:'Necessário para manejar animais.',effect:'Permite manejos sanitários.',built:false},
+  brete:{name:'Brete e tronco',icon:'🔩',cost:3500,desc:'Facilita vacinação e exames.',effect:'+20% eficiência veterinária.',built:false},
+  estabulo:{name:'Estábulo',icon:'🏚️',cost:5000,desc:'Abrigo para o rebanho.',effect:'Reduz estresse no inverno.',built:false},
+  salaOrdenha:{name:'Sala de ordenha',icon:'🥛',cost:8000,desc:'Ordenha mecanizada.',effect:'+40% produção de leite.',built:false},
+  tanqueLeit:{name:'Tanque de resfriamento',icon:'🧊',cost:6000,desc:'Conserva o leite.',effect:'+R$0,50/litro no preço.',built:false},
+  silo:{name:'Silo de silagem',icon:'🏗️',cost:10000,desc:'Armazena silagem para a seca.',effect:'Estoque de 10.000kg de silagem.',built:false},
+  confinamento:{name:'Confinamento',icon:'🏭',cost:20000,desc:'Sistema intensivo de engorda.',effect:'+60% ganho de peso na engorda.',built:false},
+  farmVet:{name:'Farmácia veterinária',icon:'💊',cost:4000,desc:'Estoque de medicamentos.',effect:'Reduz custo de tratamentos 30%.',built:false},
+  quarentena:{name:'Área de quarentena',icon:'🚧',cost:2500,desc:'Isola animais doentes.',effect:'Evita propagação de doenças.',built:false},
+  energiaSolar:{name:'Energia solar',icon:'⚡',cost:15000,desc:'Reduz custo de energia.',effect:'-R$500/mês em despesas.',built:false},
+  laboratorio:{name:'Laboratório genético',icon:'🔬',cost:25000,desc:'Inseminação e transferência de embriões.',effect:'Permite IA e TE.',built:false},
+};
+const MACHINES={
+  trator:{name:'Trator 75cv',icon:'🚜',cost:80000,maint:500,fuelDay:30,desc:'Roçagem, adubação e plantio.',owned:false,condition:100},
+  caminhaoBoiadeiro:{name:'Caminhão boiadeiro',icon:'🚛',cost:120000,maint:800,fuelDay:0,desc:'Transporte de animais. Reduz frete.',owned:false,condition:100},
+  ordenhadeira:{name:'Ordenhadeira mecânica',icon:'⚙️',cost:15000,maint:200,fuelDay:0,desc:'+25% leite por ordenha.',owned:false,condition:100},
+  roçadeira:{name:'Roçadeira',icon:'🌿',cost:8000,maint:150,fuelDay:15,desc:'Manejo de pastagem.',owned:false,condition:100},
+  distribuidor:{name:'Distribuidor de adubo',icon:'🌱',cost:12000,maint:200,fuelDay:10,desc:'Adubação eficiente. +30% crescimento do pasto.',owned:false,condition:100},
+};
+const STAFF_TYPES={
+  peao:{name:'Peão',icon:'👨‍🌾',salary:1800,efficiency:0.7,desc:'Cuida do gado e das cercas.'},
+  ordenhador:{name:'Ordenhador',icon:'🧑‍🔬',salary:2200,efficiency:0.85,desc:'+15% produção de leite.'},
+  veterinario:{name:'Veterinário',icon:'👨‍⚕️',salary:5000,efficiency:1.0,desc:'Reduz doenças 40%. Trata automaticamente.'},
+  inseminador:{name:'Inseminador',icon:'🧬',salary:3500,efficiency:0.9,desc:'Realiza IA. Melhora fertilidade.'},
+  gerente:{name:'Gerente',icon:'👔',salary:4500,efficiency:1.0,desc:'Aumenta eficiência geral 20%.'},
+  tratorista:{name:'Tratorista',icon:'🚜',salary:2800,efficiency:0.85,desc:'Opera máquinas pesadas.'},
+};
+const INSUMOS={
+  racaoBasica:{name:'Ração básica',icon:'🌽',unit:'kg',price:1.2,desc:'Alimentação suplementar.',perDay:3},
+  racaoEngorda:{name:'Ração engorda',icon:'🌾',unit:'kg',price:2.1,desc:'Acelera ganho de peso.',perDay:5},
+  salMineral:{name:'Sal mineral',icon:'🧂',unit:'kg',price:3.5,desc:'Suplemento mineral essencial.',perDay:0.1},
+  silagem:{name:'Silagem',icon:'🌿',unit:'kg',price:0.4,desc:'Volumoso para seca.',perDay:8},
+  vacina:{name:'Vacina aftosa',icon:'💉',unit:'dose',price:8,desc:'Vacinação obrigatória.'},
+  vermifugo:{name:'Vermífugo',icon:'💊',unit:'dose',price:12,desc:'Controle de parasitas.'},
+  carrapaticida:{name:'Carrapaticida',icon:'🐛',unit:'litro',price:45,desc:'Controle de carrapatos.'},
+  antibiotico:{name:'Antibiótico',icon:'🔬',unit:'dose',price:35,desc:'Tratamento de infecções.'},
+  hormonio:{name:'Hormônio IA',icon:'🧬',unit:'dose',price:80,desc:'Para inseminação artificial.'},
+};
+const MISSIONS_DEF=[
+  {id:'m1',name:'Primeiros passos',desc:'Compre seu primeiro animal',goal:'cows',target:1,reward:500,xp:100},
+  {id:'m2',name:'Pequeno produtor',desc:'Tenha 10 animais no rebanho',goal:'cows',target:10,reward:2000,xp:300},
+  {id:'m3',name:'Produtor leiteiro',desc:'Produza 100 litros de leite',goal:'totalMilk',target:100,reward:1500,xp:200},
+  {id:'m4',name:'Primeiro curral',desc:'Construa o curral básico',goal:'building',target:'curral',reward:1000,xp:150},
+  {id:'m5',name:'Vacinado',desc:'Vaccine todos os animais',goal:'allVaccinated',target:1,reward:800,xp:120},
+  {id:'m6',name:'Rebanho médio',desc:'Tenha 30 animais',goal:'cows',target:30,reward:5000,xp:500},
+  {id:'m7',name:'Fazenda estruturada',desc:'Construa 5 benfeitorias',goal:'buildings',target:5,reward:8000,xp:600},
+  {id:'m8',name:'Mil litros',desc:'Acumule 1000 litros vendidos',goal:'totalMilk',target:1000,reward:10000,xp:1000},
+  {id:'m9',name:'Grande produtor',desc:'Tenha 60 animais',goal:'cows',target:60,reward:20000,xp:2000},
+  {id:'m10',name:'Confinador',desc:'Construa o confinamento',goal:'building',target:'confinamento',reward:15000,xp:1500},
+];
+
+// ============================================================
+// GAME STATE
+// ============================================================
+let G={
+  money:5000, day:1, season:2, weather:0,
+  cows:[], maxCows:30, cowId:0,
+  milkStock:0, totalMilkSold:0, totalMilkProduced:0,
+  piquetes:[], selectedPiquete:null, selectedCow:null,
+  buildings:{}, machines:{}, staff:[],
+  inventory:{},
+  contracts:[],
+  loans:[],
+  finance:{income:0,expense:0,monthHistory:[]},
+  monthDay:1,
+  missions:[],
+  stats:{animaisMortos:0,bezerrosNascidos:0,vendasBoi:0,totalGanho:0},
+  reputation:10, level:1, xp:0,
+  alerts:[],
+  log:[],
+  vetCalendar:{nextVacina:30,nextVermifugo:90,nextCarrapato:60},
+};
+
+// ============================================================
+// INIT
+// ============================================================
+function init(){
+  // Copy building/machine state
+  Object.keys(BUILDINGS).forEach(k=>G.buildings[k]={...BUILDINGS[k]});
+  Object.keys(MACHINES).forEach(k=>G.machines[k]={...MACHINES[k]});
+  // Init inventory
+  Object.keys(INSUMOS).forEach(k=>G.inventory[k]=0);
+  G.inventory.racaoBasica=200;
+  G.inventory.salMineral=20;
+  G.inventory.vacina=10;
+  G.inventory.vermifugo=5;
+  // Init piquetes
+  for(let i=0;i<3;i++) G.piquetes.push(makePiquete());
+  // Init missions
+  G.missions=MISSIONS_DEF.map(m=>({...m,progress:0,done:false,claimed:false}));
+  // Market prices
+  initMarket();
+  // Init contracts
+  generateContracts();
+  addLog('🌅 Bem-vindo ao Pecuária Simulator! Comece comprando animais na Loja.','info');
+  addLog('💡 Dica: compre ração, vacinas e construa o curral básico primeiro.','info');
+  renderAll();
+}
+
+// ============================================================
+// MARKET
+// ============================================================
+let market={
+  boiGordo:{price:210,base:210,trend:0,label:'Boi gordo (arroba)',unit:'@'},
+  bezerro:{price:1800,base:1800,trend:0,label:'Bezerro desmamado',unit:'cab'},
+  leite:{price:2.8,base:2.8,trend:0,label:'Leite (litro)',unit:'L'},
+  matriz:{price:4500,base:4500,trend:0,label:'Vaca matriz',unit:'cab'},
+  touro:{price:12000,base:12000,trend:0,label:'Touro reprodutor',unit:'cab'},
+};
+function initMarket(){
+  // random initial variation
+  Object.keys(market).forEach(k=>{
+    market[k].price=market[k].base*(0.9+Math.random()*0.2);
+    market[k].trend=(Math.random()-0.5)*0.05;
+  });
+}
+function updateMarket(){
+  Object.keys(market).forEach(k=>{
+    const m=market[k];
+    m.price=Math.max(m.base*0.6,Math.min(m.base*1.5,m.price*(1+m.trend+(Math.random()-0.5)*0.03)));
+    if(Math.random()<0.1) m.trend=(Math.random()-0.5)*0.04;
+  });
+}
+function leitePrice(){
+  let p=market.leite.price;
+  if(G.buildings.tanqueLeit&&G.buildings.tanqueLeit.built) p+=0.5;
+  return p;
+}
+
+// ============================================================
+// COWS
+// ============================================================
+function makeCow(breedKey,age){
+  const b=BREEDS[breedKey];
+  const age2=age||0;
+  return{
+    id:G.cowId++, breed:breedKey,
+    name:b.name+'#'+(G.cowId),
+    age:age2, health:100, hunger:70,
+    peso:b.basePeso+(age2*b.gainDay*0.5),
+    milkToday:false, fedToday:false,
+    sick:false, sickDays:0, disease:'',
+    vaccinated:false, lastVermifugo:0, lastCarrapato:0,
+    pregnant:false, pregnancyDays:0, pregnancies:0,
+    engordaRation:0, geneticScore:50+(Math.random()*30|0),
+    daysOwned:0,
+  };
+}
+function getPhase(age){
+  for(const p of PHASES) if(age>=p.min&&age<=p.max) return p;
+  return PHASES[4];
+}
+function cowIcon(c){
+  const b=BREEDS[c.breed];
+  const ph=getPhase(c.age);
+  if(ph.key==='bezerro') return '🐣';
+  if(b.sexo==='M'&&c.breed==='touro') return '🐃';
+  if(b.sexo==='M') return '🐂';
+  return '🐄';
+}
+function sellCowValue(c){
+  const b=BREEDS[c.breed];
+  const ph=getPhase(c.age);
+  const arrobas=Math.max(1,c.peso/15);
+  let val=arrobas*market.boiGordo.price*ph.priceMult*(c.health/100)*(0.8+c.geneticScore/250);
+  if(b.milk>0&&ph.key==='adulto') val=Math.max(val,market.matriz.price*(c.health/100));
+  return Math.round(val);
+}
+function canMilk(c){
+  const b=BREEDS[c.breed];
+  return b.milk>0 && getPhase(c.age).key==='adulto' && !c.sick && !c.milkToday;
+}
+function milkAmount(c){
+  const b=BREEDS[c.breed];
+  let l=b.milk;
+  l*=SEASONS[G.season].milkMod*WEATHERS[G.weather].milkMod;
+  if(!c.fedToday) l*=0.5;
+  if(c.engordaRation>0) l*=0.8;
+  if(G.buildings.salaOrdenha&&G.buildings.salaOrdenha.built) l*=1.4;
+  const ord=G.staff.find(s=>s.type==='ordenhador');
+  if(ord) l*=1.15;
+  return Math.max(0,Math.round(l));
+}
+function gainWeight(c){
+  const b=BREEDS[c.breed];
+  let g=b.gainDay;
+  g*=SEASONS[G.season].weightMod*WEATHERS[G.weather].pastureMod*0.6+0.4;
+  if(!c.fedToday) g*=0.25;
+  if(c.sick) g=0;
+  const ph=getPhase(c.age);
+  if(ph.key==='engorda'){
+    if(c.engordaRation>0) g*=1.8;
+    if(G.buildings.confinamento&&G.buildings.confinamento.built) g*=1.6;
+  }
+  const ger=G.staff.find(s=>s.type==='gerente');
+  if(ger) g*=1.2;
+  return Math.max(0,Math.min(g,b.pesoMax-c.peso));
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function actAll(type){
+  if(type==='alimentar'){
+    const unfed=G.cows.filter(c=>!c.fedToday&&c.health>0);
+    if(!unfed.length){notify('Todos já foram alimentados hoje.','warn');return;}
+    const costPerHead=G.buildings.silo&&G.buildings.silo.built?0.8:1.2;
+    const cost=Math.round(unfed.length*costPerHead*10);
+    if(G.money<cost){notify('Capital insuficiente. Precisa R$'+cost,'err');return;}
+    spend(cost,'Alimentação do rebanho');
+    unfed.forEach(c=>{c.fedToday=true;c.hunger=Math.min(100,c.hunger+40);});
+    addLog('🌾 Alimentou '+unfed.length+' animais. Custo R$'+cost+'.');
+    renderCattle();renderHUD();
+  }
+  if(type==='ordenhar'){
+    const vacas=G.cows.filter(c=>canMilk(c));
+    const jaOrd=G.cows.filter(c=>BREEDS[c.breed].milk>0&&getPhase(c.age).key==='adulto'&&c.milkToday).length;
+    if(!vacas.length){
+      if(jaOrd) notify(jaOrd+' vaca(s) já ordenhadas hoje. Limite: 1x por dia.','warn');
+      else notify('Nenhuma vaca leiteira adulta disponível.','warn');
+      return;
+    }
+    let total=0;
+    vacas.forEach(c=>{
+      const l=milkAmount(c);
+      c.milkToday=true;G.milkStock+=l;G.totalMilkProduced+=l;total+=l;
+    });
+    if(jaOrd) addLog('🥛 Ordenha: +'+total+'L. '+jaOrd+' já ordenhadas (limite diário).','good');
+    else addLog('🥛 Ordenha: +'+total+'L coletados.','good');
+    notify('+'+total+'L no estoque.','ok');
+    checkMissions();renderHUD();
+  }
+  if(type==='vender-leite'){
+    if(!G.milkStock){notify('Estoque de leite vazio.','warn');return;}
+    const p=leitePrice();
+    const val=Math.round(G.milkStock*p);
+    earn(val,'Venda de leite');
+    G.totalMilkSold+=G.milkStock;
+    addLog('💰 Vendeu '+G.milkStock+'L de leite por R$'+val+' (R$'+p.toFixed(2)+'/L).','good');
+    notify('R$'+val+' recebidos pelo leite.','ok');
+    G.milkStock=0;checkMissions();renderHUD();
+  }
+}
+
+function milkOneCow(idx){
+  const c=G.cows[idx];if(!c)return;
+  if(c.milkToday){notify(c.name+' já foi ordenhada hoje. 1x por dia.','warn');return;}
+  if(!canMilk(c)){notify('Animal não pode ser ordenhado agora.','warn');return;}
+  const l=milkAmount(c);c.milkToday=true;G.milkStock+=l;G.totalMilkProduced+=l;
+  addLog(c.name+' ordenhada: +'+l+'L.','good');notify('+'+l+'L','ok');
+  checkMissions();renderCattle();renderHUD();
+}
+
+function sellCow(idx){
+  const c=G.cows[idx];if(!c)return;
+  const val=sellCowValue(c);
+  earn(val,'Venda de animal');
+  G.stats.vendasBoi++;
+  addLog('💰 Vendeu '+c.name+' ('+c.peso.toFixed(0)+'kg) por R$'+val+'.');
+  notify(c.name+' vendido por R$'+val,'ok');
+  G.cows.splice(idx,1);G.selectedCow=null;renderAll();
+}
+
+function vacinarAnimal(idx){
+  const c=G.cows[idx];if(!c)return;
+  if(G.inventory.vacina<1){notify('Sem vacinas em estoque.','err');return;}
+  G.inventory.vacina--;c.vaccinated=true;
+  addLog(c.name+' vacinado.','good');notify(c.name+' vacinado!','ok');
+  checkMissions();renderCattle();
+}
+
+function tratarAnimal(idx,med){
+  const c=G.cows[idx];if(!c||!c.sick)return;
+  const discount=G.buildings.farmVet&&G.buildings.farmVet.built?0.7:1;
+  if(med==='antibiotico'&&G.inventory.antibiotico>=1){
+    G.inventory.antibiotico--;c.sick=false;c.sickDays=0;c.health=Math.min(100,c.health+30);
+    addLog(c.name+' curado com antibiótico.','good');notify(c.name+' curado!','ok');
+  } else if(med==='auto'&&G.money>=200*discount){
+    spend(Math.round(200*discount),'Tratamento veterinário');
+    c.sick=false;c.sickDays=0;c.health=Math.min(100,c.health+25);
+    addLog(c.name+' tratado pelo veterinário. R$'+Math.round(200*discount)+'.','good');
+  } else {
+    notify('Sem recursos para tratamento.','err');return;
+  }
+  renderCattle();renderVet();
+}
+
+function feedEngorda(idx){
+  const c=G.cows[idx];
+  if(G.inventory.racaoEngorda<5){notify('Estoque insuficiente de ração engorda.','err');return;}
+  G.inventory.racaoEngorda-=5;c.engordaRation=7;
+  addLog(c.name+' em dieta de engorda por 7 dias.','good');notify('Dieta de engorda ativada!','ok');
+  renderDetail(idx);
+}
+
+function inseminarAnimal(idx){
+  const c=G.cows[idx];if(!c||BREEDS[c.breed].sexo!=='F'||c.pregnant)return;
+  const ph=getPhase(c.age);if(ph.key!=='adulto'){notify('Apenas vacas adultas podem ser inseminadas.','warn');return;}
+  const hasTecnico=G.staff.find(s=>s.type==='inseminador');
+  const hasLab=G.buildings.laboratorio&&G.buildings.laboratorio.built;
+  if(!hasTecnico&&!hasLab){notify('Precisa de inseminador ou laboratório genético.','warn');return;}
+  if(G.inventory.hormonio<1){notify('Sem hormônio IA em estoque.','err');return;}
+  G.inventory.hormonio--;c.pregnant=true;c.pregnancyDays=0;
+  addLog(c.name+' inseminada artificialmente.','good');notify(c.name+' prenha!','ok');
+  renderDetail(idx);
+}
+
+function coberturaTouro(){
+  const touros=G.cows.filter(c=>c.breed==='touro'||c.breed==='touroBraford');
+  if(!touros.length){notify('Nenhum touro reprodutor no rebanho.','warn');return;}
+  const femeas=G.cows.filter(c=>BREEDS[c.breed].sexo==='F'&&getPhase(c.age).key==='adulto'&&!c.pregnant&&!c.sick);
+  if(!femeas.length){notify('Nenhuma fêmea adulta disponível.','warn');return;}
+  let cobriu=0;
+  femeas.forEach(f=>{if(Math.random()<BREEDS[f.breed].fertility){f.pregnant=true;f.pregnancyDays=0;cobriu++;}});
+  addLog('🐃 Touro cobriu rebanho: '+cobriu+'/'+femeas.length+' fêmeas prenhas.','good');
+  notify(cobriu+' fêmeas prenhas!','ok');
+  renderCattle();renderReprod();
+}
+
+// ============================================================
+// NEXT DAY
+// ============================================================
+function nextDay(){
+  G.day++;G.monthDay++;
+  G.season=Math.floor(G.day/25)%4;
+  G.weather=Math.floor(Math.random()*5);
+  if(G.weather===4&&Math.random()>0.15) G.weather=Math.floor(Math.random()*3);
+
+  const s=SEASONS[G.season],w=WEATHERS[G.weather];
+  const diseases=['Mastite','Febre aftosa','Pneumonia','Verminose','Tristeza parasitária','Brucelose'];
+  const hasVet=G.staff.find(s=>s.type==='veterinario');
+  const hasQuarantine=G.buildings.quarentena&&G.buildings.quarentena.built;
+  const sickMult=s.sickMod*(hasVet?0.4:1)*(hasQuarantine?0.7:1);
+  const newCalves=[];
+
+  G.cows.forEach(c=>{
+    c.daysOwned++;c.age++;
+    c.fedToday=false;c.milkToday=false;
+    c.hunger=Math.max(0,c.hunger-25);
+    if(c.hunger<20) c.health=Math.max(0,c.health-10);
+    c.peso=Math.min(BREEDS[c.breed].pesoMax,c.peso+gainWeight(c));
+    if(c.engordaRation>0) c.engordaRation--;
+    // disease
+    const sickChance=0.04*sickMult+(w.sickChance||0);
+    if(!c.sick&&c.health>30&&Math.random()<sickChance){
+      c.sick=true;c.disease=diseases[Math.random()*diseases.length|0];c.sickDays=0;
+      addLog('🤒 ALERTA: '+c.name+' adoeceu com '+c.disease+'!','alert');
+      notify(c.name+' ficou doente!','err');
+      // auto-treat if vet
+      if(hasVet&&G.inventory.antibiotico>=1){
+        G.inventory.antibiotico--;c.sick=false;c.sickDays=0;c.health=Math.min(100,c.health+20);
+        addLog('💉 Veterinário tratou '+c.name+' automaticamente.','good');
+      }
+    }
+    if(c.sick){c.sickDays++;c.health=Math.max(0,c.health-8);}
+    // pregnancy
+    if(c.pregnant){
+      c.pregnancyDays++;
+      if(c.pregnancyDays>=280){
+        c.pregnant=false;c.pregnancyDays=0;c.pregnancies++;
+        if(G.cows.length+newCalves.length<G.maxCows){
+          const isMacho=Math.random()>0.5;
+          const nb=isMacho?'neloreM':'nelore';
+          const calf=makeCow(nb,0);
+          calf.geneticScore=Math.round((c.geneticScore+(60+Math.random()*30))/2);
+          newCalves.push(calf);
+          G.stats.bezerrosNascidos++;
+          addLog('🐣 Nasceu bezerro '+(isMacho?'macho':'fêmea')+'! Genética: '+calf.geneticScore+'.','good');
+          notify('Nasceu um bezerro!','ok');
+        } else {
+          addLog('⚠️ Parto de '+c.name+' mas pasto cheio — bezerro perdido.','alert');
+        }
+      }
+    }
+    // pasture health recovery
+    c.hunger=Math.min(100,c.hunger+getPastureOutput());
+  });
+
+  newCalves.forEach(calf=>G.cows.push(calf));
+  const dead=G.cows.filter(c=>c.health<=0);
+  dead.forEach(c=>addLog('💀 '+c.name+' morreu. Causa: descuido sanitário.','alert'));
+  G.stats.animaisMortos+=dead.length;
+  G.cows=G.cows.filter(c=>c.health>0);
+
+  // pasture growth
+  G.piquetes.forEach(pq=>{
+    if(!pq.locked){
+      const growth=pq.growthRate*s.pastureMod*w.pastureMod*0.5;
+      pq.height=Math.min(100,pq.height+growth);
+    }
+  });
+
+  // staff costs
+  const staffCost=G.staff.reduce((s,e)=>s+e.salary/30,0);
+  if(staffCost>0) spend(Math.round(staffCost),'Folha salarial');
+
+  // machine fuel/maint
+  let machineCost=0;
+  Object.values(G.machines).forEach(m=>{if(m.owned)machineCost+=m.fuelDay;});
+  if(machineCost>0) spend(machineCost,'Combustível e manutenção');
+
+  // solar savings
+  if(G.buildings.energiaSolar&&G.buildings.energiaSolar.built){
+    earn(Math.round(500/30),'Economia energia solar');
+  }
+
+  // vet calendar
+  G.vetCalendar.nextVacina--;
+  G.vetCalendar.nextVermifugo--;
+  G.vetCalendar.nextCarrapato--;
+  if(G.vetCalendar.nextVacina<=0){
+    addLog('📅 Calendário: época de vacinação!','info');
+    G.vetCalendar.nextVacina=180;
+  }
+  if(G.vetCalendar.nextVermifugo<=0){
+    addLog('📅 Calendário: época de vermifugação!','info');
+    G.vetCalendar.nextVermifugo=90;
+  }
+
+  // contracts check
+  G.contracts.forEach(ct=>{
+    if(ct.active&&!ct.fulfilled){
+      if(G.day>=ct.deadline){
+        addLog('❌ Contrato expirado: '+ct.name,'alert');ct.active=false;
+      }
+    }
+  });
+
+  // end month
+  if(G.monthDay>=30){
+    G.finance.monthHistory.push({month:Math.floor(G.day/30),income:G.finance.income,expense:G.finance.expense,profit:G.finance.income-G.finance.expense});
+    if(G.finance.monthHistory.length>12) G.finance.monthHistory.shift();
+    G.finance.income=0;G.finance.expense=0;G.monthDay=0;
+    // loan payments
+    G.loans.forEach(l=>{
+      if(l.remaining>0){
+        const pmt=Math.min(l.remaining,l.monthly);
+        spend(pmt,'Parcela financiamento');l.remaining-=pmt;
+        if(l.remaining<=0) addLog('✅ Financiamento "'+l.name+'" quitado!','good');
+      }
+    });
+    addLog('📆 Fim do mês. Relatório financeiro atualizado.','info');
+    updateMarket();
+    generateContracts();
+  }
+
+  updateMarket();
+  checkMissions();
+  updateBadges();
+  addLog('📅 Dia '+G.day+' — '+s.name+', '+w.name+'.','info');
+  renderAll();
+}
+
+// ============================================================
+// PASTAGEM
+// ============================================================
+function makePiquete(){
+  return{id:G.piquetes.length,name:'Piquete '+(G.piquetes.length+1),height:60+Math.random()*30|0,capacity:5,animals:[],locked:false,resting:false,grass:'Brachiaria',growthRate:1+Math.random()*0.5,fertility:60+Math.random()*30|0};
+}
+function getPastureOutput(){
+  const activePqs=G.piquetes.filter(p=>!p.resting&&!p.locked);
+  if(!activePqs.length) return 0;
+  const avgHeight=activePqs.reduce((s,p)=>s+p.height,0)/activePqs.length;
+  return avgHeight*0.2;
+}
+function addPiquete(){
+  if(G.money<500){notify('Precisa R$500.','err');return;}
+  spend(500,'Novo piquete');G.piquetes.push(makePiquete());
+  addLog('🌿 Novo piquete criado.','good');renderPasture();
+}
+
+// ============================================================
+// FINANCE
+// ============================================================
+function earn(val,desc){G.money+=val;G.finance.income+=val;G.stats.totalGanho+=val;}
+function spend(val,desc){G.money=Math.max(0,G.money-val);G.finance.expense+=val;}
+
+// ============================================================
+// CONTRACTS
+// ============================================================
+function generateContracts(){
+  if(G.contracts.filter(c=>c.active&&!c.fulfilled).length>=3) return;
+  const types=[
+    {name:'Contrato laticínio regional',type:'leite',qty:500,bonus:0.4,days:30},
+    {name:'Contrato frigorífico JBS',type:'boiGordo',qty:5,bonus:200,days:45},
+    {name:'Exportação de matrizes',type:'matriz',qty:3,bonus:1500,days:60},
+    {name:'Fornecimento cooperativa',type:'leite',qty:200,bonus:0.2,days:15},
+  ];
+  const t=types[Math.random()*types.length|0];
+  G.contracts.push({...t,id:G.contracts.length,active:false,fulfilled:false,deadline:G.day+t.days});
+}
+function activateContract(idx){
+  const c=G.contracts[idx];c.active=true;
+  addLog('📋 Contrato ativado: '+c.name,'info');notify('Contrato firmado!','ok');
+  renderContracts();
+}
+
+// ============================================================
+// BUILDINGS
+// ============================================================
+function buildStructure(key){
+  const b=G.buildings[key];
+  if(b.built){notify('Já construído!','warn');return;}
+  if(G.money<b.cost){notify('Capital insuficiente. Precisa R$'+b.cost.toLocaleString('pt-BR'),'err');return;}
+  spend(b.cost,'Construção: '+b.name);b.built=true;
+  if(key==='cerca'||key==='barn') G.maxCows+=10;
+  addLog('🏗️ Construção concluída: '+b.name+'!','good');notify(b.name+' construído!','ok');
+  checkMissions();renderFazenda();
+}
+
+// ============================================================
+// MACHINES
+// ============================================================
+function buyMachine(key){
+  const m=G.machines[key];
+  if(m.owned){notify('Já possui!','warn');return;}
+  if(G.money<m.cost){notify('Capital insuficiente.','err');return;}
+  spend(m.cost,'Compra: '+m.name);m.owned=true;
+  addLog('🚜 Comprou: '+m.name,'good');notify(m.name+' adquirido!','ok');
+  renderMachines();
+}
+
+// ============================================================
+// STAFF
+// ============================================================
+function hireStaff(type){
+  const t=STAFF_TYPES[type];
+  if(G.money<t.salary*2){notify('Precisa de R$'+t.salary*2+' para contratar.','err');return;}
+  G.staff.push({type,name:t.name,salary:t.salary,satisfaction:90,experience:1,daysWorked:0});
+  addLog('👷 Contratou: '+t.name+'.','good');notify(t.name+' contratado!','ok');
+  renderFuncionarios();
+}
+function fireStaff(idx){
+  const s=G.staff[idx];G.staff.splice(idx,1);
+  addLog('👷 Dispensou: '+s.name+'.','info');renderFuncionarios();
+}
+
+// ============================================================
+// LOAN
+// ============================================================
+function takeLoan(amt,name){
+  if(G.loans.filter(l=>l.remaining>0).length>=2){notify('Máximo de 2 financiamentos simultâneos.','warn');return;}
+  const monthly=Math.round(amt/24*1.15);
+  earn(amt,'Financiamento rural');
+  G.loans.push({name,amount:amt,monthly,remaining:amt,months:24});
+  addLog('🏦 Financiamento contratado: R$'+amt.toLocaleString('pt-BR'),'info');notify('R$'+amt.toLocaleString('pt-BR')+' creditados!','ok');
+  renderFinancas();
+}
+
+// ============================================================
+// BUY
+// ============================================================
+function buyCow(breedKey){
+  const b=BREEDS[breedKey];
+  if(G.money<b.buyCost){notify('Capital insuficiente. Precisa R$'+b.buyCost.toLocaleString('pt-BR'),'err');return;}
+  if(G.cows.length>=G.maxCows){notify('Pasto cheio! Construa mais piquetes ou aumente a lotação.','warn');return;}
+  spend(b.buyCost,'Compra animal: '+b.name);
+  G.cows.push(makeCow(breedKey,300+Math.random()*200|0));
+  addLog('🐄 Comprou '+b.name+' por R$'+b.buyCost.toLocaleString('pt-BR'),'good');
+  notify(b.name+' adicionado!','ok');checkMissions();renderAll();
+}
+function buyInsumo(key,qty){
+  const i=INSUMOS[key];const cost=i.price*qty;
+  if(G.money<cost){notify('Sem capital.','err');return;}
+  spend(cost,'Insumo: '+i.name);G.inventory[key]=(G.inventory[key]||0)+qty;
+  addLog('🛒 Comprou '+qty+' '+i.unit+' de '+i.name+' por R$'+cost.toFixed(2),'good');
+  renderNutricao();renderHUD();
+}
+
+// ============================================================
+// MISSIONS
+// ============================================================
+function checkMissions(){
+  G.missions.forEach(m=>{
+    if(m.done) return;
+    let prog=0;
+    if(m.goal==='cows') prog=G.cows.length;
+    if(m.goal==='totalMilk') prog=G.totalMilkSold;
+    if(m.goal==='building') prog=G.buildings[m.target]&&G.buildings[m.target].built?1:0;
+    if(m.goal==='buildings') prog=Object.values(G.buildings).filter(b=>b.built).length;
+    if(m.goal==='allVaccinated') prog=G.cows.length>0&&G.cows.every(c=>c.vaccinated)?1:0;
+    m.progress=prog;
+    if(prog>=m.target&&!m.done){
+      m.done=true;earn(m.reward,'Recompensa missão: '+m.name);
+      G.xp+=m.xp;checkLevel();
+      addLog('🎯 Missão concluída: '+m.name+'! +R$'+m.reward+' +'+m.xp+'xp','good');
+      notify('Missão concluída: '+m.name+'!','gold');
+    }
+  });
+}
+function checkLevel(){
+  const thresholds=[0,200,500,1000,2000,4000,8000,15000,25000,40000];
+  let lv=1;
+  for(let i=1;i<thresholds.length;i++) if(G.xp>=thresholds[i]) lv=i+1;
+  if(lv>G.level){G.level=lv;addLog('⭐ Nível '+lv+'! Novos recursos desbloqueados.','gold');}
+}
+
+// ============================================================
+// LOG / NOTIFY
+// ============================================================
+function addLog(msg,type=''){G.log.unshift({msg,type});if(G.log.length>100)G.log.pop();}
+function notify(m,t='ok'){const el=document.getElementById('notif');el.textContent=m;el.className='notif show n-'+t;clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3800);}
+
+// ============================================================
+// BADGES
+// ============================================================
+function updateBadges(){
+  const sickCount=G.cows.filter(c=>c.sick).length;
+  const bs=document.getElementById('badge-sick'),bv=document.getElementById('badge-vet');
+  if(bs){bs.style.display=sickCount?'':'none';bs.textContent=sickCount;}
+  if(bv){bv.style.display=sickCount?'':'none';bv.textContent=sickCount;}
+}
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+function renderHUD(){
+  const sickCount=G.cows.filter(c=>c.sick).length;
+  document.getElementById('hud-metrics').innerHTML=
+    hm('💰','R$'+G.money.toLocaleString('pt-BR'),'Capital')+
+    hm('🐄',G.cows.length+'/'+G.maxCows,'Rebanho')+
+    hm('🥛',G.milkStock+'L','Leite')+
+    hm('🌡',sickCount?sickCount+' doen.':'OK','Sanidade',sickCount?'style="color:var(--red-t)"':'')+
+    hm('⭐','Lv.'+G.level,'Nível')+
+    hm('🏆',G.reputation,'Reputação');
+  document.getElementById('hdr-day').innerHTML='Dia '+G.day+' · '+SEASONS[G.season].name+'<br><span style="color:var(--text3);font-size:10px">'+WEATHERS[G.weather].icon+' '+WEATHERS[G.weather].name+'</span>';
+  document.getElementById('weather-bar').innerHTML=
+    '<span style="font-size:17px">'+WEATHERS[G.weather].icon+'</span>'+
+    '<span style="font-weight:500">'+WEATHERS[G.weather].name+'</span>'+
+    '<span style="color:var(--text2)">'+SEASONS[G.season].desc+'</span>'+
+    '<span class="season-badge" style="background:var(--bg3);color:var(--text2)">'+SEASONS[G.season].icon+' '+SEASONS[G.season].name+'</span>'+
+    '<span style="color:var(--text3);font-size:11px;margin-left:8px">Leite: R$'+leitePrice().toFixed(2)+'/L</span>';
+}
+function hm(icon,val,lbl,extra){return`<div class="hm" ${extra||''}><span class="hm-icon">${icon}</span><div><div class="hm-val">${val}</div><div class="hm-lbl">${lbl}</div></div></div>`;}
+
+function renderCattle(){
+  const grid=document.getElementById('cattle-grid');if(!grid)return;
+  document.getElementById('herd-count').textContent=G.cows.length;
+  // phase summary
+  const pc={bezerro:0,garrote:0,recria:0,engorda:0,adulto:0};
+  G.cows.forEach(c=>pc[getPhase(c.age).key]++);
+  document.getElementById('phase-summary').innerHTML=PHASES.map(p=>
+    `<div class="ph-block"><span class="ph-num">${pc[p.key]}</span><span class="chip ${p.chipClass}" style="font-size:9px">${p.label}</span></div>`
+  ).join('');
+  // grid
+  grid.innerHTML='';
+  G.cows.forEach((c,i)=>{
+    const ph=getPhase(c.age);const b=BREEDS[c.breed];
+    const slot=document.createElement('div');
+    let cls='cow-card'+(G.selectedCow===i?' sel':'')+(c.sick?' sick':'')+(c.pregnant?' pregnant':'');
+    slot.className=cls;
+    const hc=c.health>60?'#5a9e3a':c.health>30?'#c87820':'#c94040';
+    const hg=c.hunger>60?'#2878c8':c.hunger>30?'#c87820':'#c94040';
+    let dots='';
+    if(canMilk(c)) dots+='<div class="dot-milk"></div>';
+    if(c.milkToday) dots+='<div class="dot-done"></div>';
+    if(c.pregnant) dots+='<div class="dot-preg"></div>';
+    slot.innerHTML=dots+
+      `<div class="cow-icon">${cowIcon(c)}</div>`+
+      `<div class="cow-name">${c.name}</div>`+
+      `<div class="cow-info">${c.peso.toFixed(0)}kg·${c.age}d</div>`+
+      `<div class="cow-phase"><span class="chip ${ph.chipClass}">${ph.label}</span></div>`+
+      `<div class="bw"><div class="bf" style="width:${c.health}%;background:${hc}"></div></div>`+
+      `<div class="bw"><div class="bf" style="width:${c.hunger}%;background:${hg}"></div></div>`;
+    slot.onclick=()=>{G.selectedCow=G.selectedCow===i?null:i;renderCattle();}
+    grid.appendChild(slot);
+  });
+  renderDetail(G.selectedCow);
+}
+
+function renderDetail(idx){
+  const el=document.getElementById('animal-detail');if(!el)return;
+  if(idx===null||idx===undefined||!G.cows[idx]){el.innerHTML='';return;}
+  const c=G.cows[idx];const b=BREEDS[c.breed];const ph=getPhase(c.age);
+  const lp=leitePrice();
+  el.innerHTML=`<div class="dp">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px">
+    <div class="dr"><span class="dr-lbl">Nome</span><b>${c.name}</b></div>
+    <div class="dr"><span class="dr-lbl">Fase</span><span class="chip ${ph.chipClass}">${ph.label} (${c.age}d)</span></div>
+    <div class="dr"><span class="dr-lbl">Peso</span>${c.peso.toFixed(1)}kg</div>
+    <div class="dr"><span class="dr-lbl">Saúde</span><span class="chip ${c.health>60?'c-ok':c.health>30?'c-warn':'c-err'}">${c.health}%</span></div>
+    <div class="dr"><span class="dr-lbl">Fome</span><span class="chip ${c.hunger>60?'c-ok':c.hunger>30?'c-warn':'c-err'}">${c.hunger}%</span></div>
+    <div class="dr"><span class="dr-lbl">Status</span><span class="chip ${c.sick?'c-err':'c-ok'}">${c.sick?'Doente: '+c.disease:'Saudável'}</span></div>
+    <div class="dr"><span class="dr-lbl">Vacinado</span><span class="chip ${c.vaccinated?'c-ok':'c-warn'}">${c.vaccinated?'Sim':'Não'}</span></div>
+    <div class="dr"><span class="dr-lbl">Genética</span><span class="chip c-purple">${c.geneticScore}pts</span></div>
+    ${b.milk>0?`<div class="dr"><span class="dr-lbl">Leite/dia</span>${ph.key==='adulto'?milkAmount(c)+'L — R$'+Math.round(milkAmount(c)*lp):'(fase '+ph.label+')'}</div>`:''}
+    ${b.sexo==='F'?`<div class="dr"><span class="dr-lbl">Gestação</span>${c.pregnant?'Prenha — '+c.pregnancyDays+'/280d':'Vazia'}</div>`:''}
+    ${ph.key==='engorda'?`<div class="dr"><span class="dr-lbl">Ração engorda</span>${c.engordaRation>0?c.engordaRation+'d restantes':'Inativa'}</div>`:''}
+    <div class="dr"><span class="dr-lbl">Valor venda</span><b>R$${sellCowValue(c).toLocaleString('pt-BR')}</b></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+    ${canMilk(c)?`<button onclick="milkOneCow(${idx})" class="btn-blue">Ordenhar</button>`:''}
+    ${c.milkToday?`<button disabled>Já ordenhada</button>`:''}
+    ${!c.vaccinated?`<button onclick="vacinarAnimal(${idx})" class="btn-amber">Vacinar (${G.inventory.vacina} doses)</button>`:''}
+    ${c.sick?`<button onclick="tratarAnimal(${idx},'antibiotico')" class="btn-danger">Antibiótico (${G.inventory.antibiotico})</button><button onclick="tratarAnimal(${idx},'auto')" class="btn-amber">Vet. R$140</button>`:''}
+    ${ph.key==='engorda'?`<button onclick="feedEngorda(${idx})" class="btn-primary">Ração engorda</button>`:''}
+    ${b.sexo==='F'&&ph.key==='adulto'&&!c.pregnant?`<button onclick="inseminarAnimal(${idx})" class="btn-purple">Inseminar</button>`:''}
+    <button onclick="sellCow(${idx})" class="btn-danger">Vender R$${sellCowValue(c).toLocaleString('pt-BR')}</button>
+    </div>
+  </div>`;
+}
+
+function renderPasture(){
+  const grid=document.getElementById('pasture-grid');if(!grid)return;
+  grid.innerHTML='';
+  G.piquetes.forEach((pq,i)=>{
+    const div=document.createElement('div');
+    const green=Math.round(40+pq.height*0.5);
+    div.className='pq'+(G.selectedPiquete===i?' selected':'');
+    div.style.background=`rgba(${20},${green},${20},0.6)`;
+    div.style.borderColor=pq.resting?'var(--amber)':'var(--border)';
+    div.innerHTML=`<span style="font-size:18px">${pq.resting?'💤':'🌿'}</span><div class="pq-label">${pq.name}<br><small>${pq.height|0}% altura</small></div>`;
+    div.onclick=()=>{G.selectedPiquete=G.selectedPiquete===i?null:i;renderPastureDetail();}
+    grid.appendChild(div);
+  });
+  renderPastureDetail();
+}
+function renderPastureDetail(){
+  const el=document.getElementById('piquete-detail');if(!el)return;
+  if(G.selectedPiquete===null){el.innerHTML='';return;}
+  const pq=G.piquetes[G.selectedPiquete];
+  el.innerHTML=`<div class="dp">
+    <div class="dr"><span class="dr-lbl">Nome</span>${pq.name}</div>
+    <div class="dr"><span class="dr-lbl">Forrageira</span>${pq.grass}</div>
+    <div class="dr"><span class="dr-lbl">Altura do capim</span>${pq.height|0}%<div class="prog-wrap" style="width:100px;display:inline-block;margin-left:8px"><div class="prog-fill" style="width:${pq.height}%;background:var(--green)"></div></div></div>
+    <div class="dr"><span class="dr-lbl">Fertilidade do solo</span>${pq.fertility|0}%</div>
+    <div class="dr"><span class="dr-lbl">Taxa de crescimento</span>${pq.growthRate.toFixed(2)}x</div>
+    <div class="dr"><span class="dr-lbl">Status</span><span class="chip ${pq.resting?'c-warn':'c-ok'}">${pq.resting?'Descanso':'Ativo'}</span></div>
+    <div style="display:flex;gap:6px;margin-top:10px">
+      <button onclick="togglePasture(${G.selectedPiquete})" class="${pq.resting?'btn-primary':'btn-amber'}">${pq.resting?'Ativar piquete':'Colocar em descanso'}</button>
+      <button onclick="adubarPiquete(${G.selectedPiquete})" class="btn-primary">Adubar (R$200)</button>
+      <button onclick="irrigarPiquete(${G.selectedPiquete})" class="btn-blue">Irrigar (R$150)</button>
+    </div>
+  </div>`;
+}
+function togglePasture(i){G.piquetes[i].resting=!G.piquetes[i].resting;renderPasture();}
+function adubarPiquete(i){
+  if(G.money<200){notify('R$200 necessários.','err');return;}
+  spend(200,'Adubação de piquete');G.piquetes[i].fertility=Math.min(100,G.piquetes[i].fertility+20);G.piquetes[i].growthRate=Math.min(3,G.piquetes[i].growthRate+0.2);
+  addLog('🌱 Piquete '+G.piquetes[i].name+' adubado.','good');renderPasture();
+}
+function irrigarPiquete(i){
+  if(G.money<150){notify('R$150 necessários.','err');return;}
+  spend(150,'Irrigação de piquete');G.piquetes[i].height=Math.min(100,G.piquetes[i].height+20);
+  addLog('💧 Piquete '+G.piquetes[i].name+' irrigado.','good');renderPasture();
+}
+
+function renderNutricao(){
+  const stock=document.getElementById('nutri-stock');if(!stock)return;
+  stock.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px">'+
+    Object.entries(INSUMOS).map(([k,i])=>{
+      const qty=G.inventory[k]||0;
+      return`<div class="metric-card"><div class="metric-lbl">${i.icon} ${i.name}</div><div class="metric-val">${qty} ${i.unit}</div><div class="metric-sub">R$${i.price}/${i.unit}</div></div>`;
+    }).join('')+'</div>';
+  const dieta=document.getElementById('dieta-config');
+  dieta.innerHTML=`<div style="color:var(--text2);font-size:12px;line-height:1.8">
+    <div>🐣 <b>Bezerros (0-90d):</b> Leite materno + sal mineral (${(G.inventory.salMineral||0).toFixed(0)}kg estoque)</div>
+    <div>🐂 <b>Garrote/Recria:</b> Pasto + ração básica (${G.inventory.racaoBasica}kg) + sal mineral</div>
+    <div>🐂 <b>Engorda:</b> Pasto + ração engorda (${G.inventory.racaoEngorda}kg) — confinamento acelera +60%</div>
+    <div>🐄 <b>Vacas leiteiras:</b> Pasto + ração básica + silagem (${G.inventory.silagem||0}kg) — alta exigência energética</div>
+    <div style="margin-top:8px;color:var(--text3)">Custo estimado/dia para ${G.cows.length} animais: R$${Math.round(G.cows.length*12)}</div>
+  </div>`;
+}
+
+function renderReprod(){
+  const el=document.getElementById('reprod-panel');if(!el)return;
+  const femeas=G.cows.filter(c=>BREEDS[c.breed].sexo==='F'&&getPhase(c.age).key==='adulto');
+  const prenhas=femeas.filter(c=>c.pregnant);
+  const touros=G.cows.filter(c=>c.breed==='touro'||c.breed==='touroBraford');
+  el.innerHTML=`
+    <div class="metrics-grid" style="margin-bottom:12px">
+      <div class="metric-card"><div class="metric-lbl">Fêmeas adultas</div><div class="metric-val">${femeas.length}</div></div>
+      <div class="metric-card"><div class="metric-lbl">Prenhas</div><div class="metric-val">${prenhas.length}</div></div>
+      <div class="metric-card"><div class="metric-lbl">Touros</div><div class="metric-val">${touros.length}</div></div>
+      <div class="metric-card"><div class="metric-lbl">Bezerros nascidos</div><div class="metric-val">${G.stats.bezerrosNascidos}</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button onclick="coberturaTouro()" class="btn-primary">🐃 Cobertura do touro</button>
+      <button onclick="inseminarTodas()" class="btn-purple">🧬 Inseminar todas (IA)</button>
+    </div>
+    ${prenhas.length?`<div class="sec-title" style="margin-bottom:8px">Gestações em andamento</div>`:''}
+    ${prenhas.map(c=>`
+      <div class="market-item">
+        <span style="font-size:20px">${cowIcon(c)}</span>
+        <div style="flex:1">
+          <div style="font-weight:500;font-size:13px">${c.name}</div>
+          <div style="font-size:11px;color:var(--text2)">Gestação: ${c.pregnancyDays}/280 dias</div>
+          <div class="prog-wrap" style="margin-top:4px"><div class="prog-fill" style="width:${c.pregnancyDays/280*100}%;background:var(--purple)"></div></div>
+        </div>
+        <span class="chip c-purple">${280-c.pregnancyDays}d restantes</span>
+      </div>`).join('')}
+  `;
+}
+function inseminarTodas(){
+  const femeas=G.cows.filter(c=>BREEDS[c.breed].sexo==='F'&&getPhase(c.age).key==='adulto'&&!c.pregnant);
+  const hasTecnico=G.staff.find(s=>s.type==='inseminador');
+  if(!hasTecnico&&!(G.buildings.laboratorio&&G.buildings.laboratorio.built)){notify('Precisa de inseminador ou laboratório.','warn');return;}
+  if(G.inventory.hormonio<femeas.length){notify('Hormônios insuficientes. Precisa '+femeas.length+' doses.','err');return;}
+  let inseminadas=0;
+  femeas.forEach(c=>{G.inventory.hormonio--;c.pregnant=true;c.pregnancyDays=0;inseminadas++;});
+  addLog('🧬 Inseminação artificial em massa: '+inseminadas+' fêmeas.','good');notify(inseminadas+' fêmeas inseminadas!','ok');
+  renderReprod();
+}
+
+function renderFazenda(){
+  const inst=document.getElementById('build-installed');
+  const avail=document.getElementById('build-available');
+  if(!inst||!avail)return;
+  const builtItems=Object.entries(G.buildings).filter(([k,b])=>b.built);
+  const availItems=Object.entries(G.buildings).filter(([k,b])=>!b.built);
+  inst.innerHTML=builtItems.length?builtItems.map(([k,b])=>`
+    <div class="build-card built">
+      <div style="font-size:24px;margin-bottom:6px">${b.icon}</div>
+      <div class="shop-name">${b.name} ✓</div>
+      <div class="shop-desc">${b.effect}</div>
+    </div>`).join(''):'<div style="color:var(--text2)">Nenhuma benfeitoria construída.</div>';
+  avail.innerHTML=availItems.map(([k,b])=>`
+    <div class="build-card">
+      <div style="font-size:24px;margin-bottom:6px">${b.icon}</div>
+      <div class="shop-name">${b.name}</div>
+      <div class="shop-desc">${b.desc}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">${b.effect}</div>
+      <div class="shop-price">R$${b.cost.toLocaleString('pt-BR')}</div>
+      <button onclick="buildStructure('${k}')" class="btn-primary" style="width:100%">Construir</button>
+    </div>`).join('');
+}
+
+function renderMachines(){
+  const el=document.getElementById('machines-panel');if(!el)return;
+  el.innerHTML='<div class="shop-grid">'+Object.entries(G.machines).map(([k,m])=>`
+    <div class="shop-card">
+      <div class="shop-icon">${m.icon}</div>
+      <div class="shop-name">${m.name}${m.owned?' ✓':''}</div>
+      <div class="shop-desc">${m.desc}</div>
+      ${m.owned?`<div style="font-size:11px;color:var(--text2)">Cond.: ${m.condition}% · Manutenção: R$${m.maint}/mês</div>`:`<div class="shop-price">R$${m.cost.toLocaleString('pt-BR')}</div><button onclick="buyMachine('${k}')" class="btn-primary" style="width:100%">Comprar</button>`}
+    </div>`).join('')+'</div>';
+}
+
+function renderFuncionarios(){
+  const panel=document.getElementById('staff-panel');
+  const hire=document.getElementById('hire-panel');
+  if(!panel||!hire)return;
+  panel.innerHTML=G.staff.length?G.staff.map((s,i)=>`
+    <div class="market-item">
+      <span style="font-size:22px">${STAFF_TYPES[s.type].icon}</span>
+      <div style="flex:1">
+        <div style="font-weight:500">${s.name}</div>
+        <div style="font-size:11px;color:var(--text2)">Salário: R$${s.salary}/mês · Satisfação: ${s.satisfaction}%</div>
+      </div>
+      <button onclick="fireStaff(${i})" class="btn-danger" style="font-size:11px">Dispensar</button>
+    </div>`).join(''):'<div style="color:var(--text2);padding:8px">Nenhum funcionário contratado.</div>';
+  hire.innerHTML=Object.entries(STAFF_TYPES).map(([k,t])=>`
+    <div class="shop-card">
+      <div class="shop-icon">${t.icon}</div>
+      <div class="shop-name">${t.name}</div>
+      <div class="shop-desc">${t.desc}</div>
+      <div class="shop-price">R$${t.salary}/mês</div>
+      <button onclick="hireStaff('${k}')" class="btn-primary" style="width:100%">Contratar</button>
+    </div>`).join('');
+}
+
+function renderMercado(){
+  const el=document.getElementById('market-prices');if(!el)return;
+  el.innerHTML=Object.entries(market).map(([k,m])=>{
+    const diff=(m.price-m.base)/m.base*100;
+    const arrow=diff>2?'▲':diff<-2?'▼':'–';
+    const cls=diff>2?'trend-up':diff<-2?'trend-down':'';
+    return`<div class="market-item">
+      <div style="flex:1">
+        <div style="font-weight:500;font-size:13px">${m.label}</div>
+        <div style="font-size:11px;color:var(--text2)">Base: R$${m.base.toFixed(2)}/${m.unit}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:16px;font-weight:500">R$${m.price.toFixed(2)}</div>
+        <div class="price-trend ${cls}">${arrow} ${Math.abs(diff).toFixed(1)}%</div>
+      </div>
+    </div>`;
+  }).join('');
+  renderContracts();
+}
+function renderContracts(){
+  const el=document.getElementById('contracts-panel');if(!el)return;
+  const available=G.contracts.filter(c=>!c.active&&!c.fulfilled);
+  const active=G.contracts.filter(c=>c.active&&!c.fulfilled);
+  let html='';
+  if(active.length){
+    html+='<div class="sec-title" style="margin-bottom:6px">Contratos ativos</div>';
+    html+=active.map(c=>`<div class="market-item"><div style="flex:1"><div style="font-weight:500">${c.name}</div><div style="font-size:11px;color:var(--text2)">Prazo: dia ${c.deadline} · Qtd: ${c.qty} ${c.type==='leite'?'L':'cab'}</div></div><span class="chip c-blue">Ativo</span></div>`).join('');
+  }
+  if(available.length){
+    html+='<div class="sec-title" style="margin:8px 0 6px">Ofertas disponíveis</div>';
+    html+=available.map((c,i)=>`<div class="market-item"><div style="flex:1"><div style="font-weight:500">${c.name}</div><div style="font-size:11px;color:var(--text2)">${c.qty} ${c.type==='leite'?'L':'cab'} · Bônus: +R$${c.bonus} · Prazo: ${c.days} dias</div></div><button onclick="activateContract(${G.contracts.indexOf(c)})" class="btn-primary" style="font-size:11px">Aceitar</button></div>`).join('');
+  }
+  if(!html) html='<div style="color:var(--text2)">Nenhuma oferta disponível no momento.</div>';
+  el.innerHTML=html;
+}
+function showContracts(){showTab('mercado');}
+
+function renderShop(){
+  const animals=document.getElementById('shop-animals');
+  const insumos=document.getElementById('shop-insumos');
+  if(!animals||!insumos)return;
+  animals.innerHTML=Object.entries(BREEDS).map(([k,b])=>`
+    <div class="shop-card">
+      <div class="shop-icon">${b.sexo==='M'?'🐂':'🐄'}</div>
+      <div class="shop-name">${b.name}</div>
+      <div class="shop-desc">${b.desc}<br>Ganho: ${b.gainDay}kg/d · Peso máx: ${b.pesoMax}kg${b.milk?'<br>Leite: '+b.milk+'L/dia (adulto)':''}</div>
+      <div class="shop-price">R$${b.buyCost.toLocaleString('pt-BR')}</div>
+      <button onclick="buyCow('${k}')" class="btn-primary" style="width:100%">Comprar</button>
+    </div>`).join('');
+  const shopInsumos=[
+    {key:'racaoBasica',qty:100},{key:'racaoEngorda',qty:100},{key:'salMineral',qty:50},
+    {key:'silagem',qty:500},{key:'vacina',qty:10},{key:'vermifugo',qty:10},
+    {key:'carrapaticida',qty:5},{key:'antibiotico',qty:5},{key:'hormonio',qty:10},
+  ];
+  insumos.innerHTML=shopInsumos.map(({key,qty})=>{const i=INSUMOS[key];return`
+    <div class="shop-card">
+      <div class="shop-icon">${i.icon}</div>
+      <div class="shop-name">${i.name}</div>
+      <div class="shop-desc">${i.desc}</div>
+      <div class="shop-price">R$${(i.price*qty).toFixed(2)} (${qty} ${i.unit})</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:5px">Estoque: ${G.inventory[key]||0} ${i.unit}</div>
+      <button onclick="buyInsumo('${key}',${qty})" class="btn-amber" style="width:100%">Comprar ${qty} ${i.unit}</button>
+    </div>`;}).join('');
+}
+
+function renderFinancas(){
+  const metrics=document.getElementById('finance-metrics');
+  const hist=document.getElementById('finance-history');
+  const loans=document.getElementById('finance-loans');
+  if(!metrics)return;
+  const totalAsset=G.cows.reduce((s,c)=>s+sellCowValue(c),0)+G.money;
+  metrics.innerHTML=
+    `<div class="metric-card"><div class="metric-lbl">Capital atual</div><div class="metric-val" style="color:var(--green-t)">R$${G.money.toLocaleString('pt-BR')}</div></div>`+
+    `<div class="metric-card"><div class="metric-lbl">Receita mês</div><div class="metric-val">R$${G.finance.income.toLocaleString('pt-BR')}</div></div>`+
+    `<div class="metric-card"><div class="metric-lbl">Despesa mês</div><div class="metric-val" style="color:var(--red-t)">R$${G.finance.expense.toLocaleString('pt-BR')}</div></div>`+
+    `<div class="metric-card"><div class="metric-lbl">Lucro mês</div><div class="metric-val" style="color:${G.finance.income-G.finance.expense>=0?'var(--green-t)':'var(--red-t)'}">${G.finance.income-G.finance.expense>=0?'+':''}R$${(G.finance.income-G.finance.expense).toLocaleString('pt-BR')}</div></div>`+
+    `<div class="metric-card"><div class="metric-lbl">Patrimônio total</div><div class="metric-val">R$${totalAsset.toLocaleString('pt-BR')}</div></div>`+
+    `<div class="metric-card"><div class="metric-lbl">Reputação</div><div class="metric-val">${G.reputation}/100</div></div>`;
+  if(hist){
+    if(G.finance.monthHistory.length){
+      hist.innerHTML='<table><thead><tr><th>Mês</th><th>Receita</th><th>Despesa</th><th>Lucro</th></tr></thead><tbody>'+
+        G.finance.monthHistory.map(h=>`<tr><td>${h.month}</td><td>R$${h.income.toLocaleString()}</td><td>R$${h.expense.toLocaleString()}</td><td style="color:${h.profit>=0?'var(--green-t)':'var(--red-t)'};font-weight:500">${h.profit>=0?'+':''}R$${h.profit.toLocaleString()}</td></tr>`).join('')+'</tbody></table>';
+    } else {hist.innerHTML='<div style="color:var(--text2)">Dados disponíveis após 30 dias.</div>';}
+  }
+  if(loans){
+    loans.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <button onclick="takeLoan(20000,'Custeio pecuário')" class="btn-blue">Custeio R$20k (2 anos)</button>
+      <button onclick="takeLoan(50000,'Investimento em estrutura')" class="btn-blue">Estrutura R$50k (2 anos)</button>
+      <button onclick="takeLoan(100000,'Expansão do rebanho')" class="btn-gold">Expansão R$100k (2 anos)</button>
+    </div>`+
+    (G.loans.filter(l=>l.remaining>0).map(l=>`
+      <div class="market-item"><div style="flex:1"><div style="font-weight:500">${l.name}</div><div style="font-size:11px;color:var(--text2)">Parcela: R$${l.monthly}/mês · Restante: R$${l.remaining.toLocaleString('pt-BR')}</div></div></div>`).join('')||'<div style="color:var(--text2);font-size:12px">Nenhum financiamento ativo.</div>');
+  }
+}
+
+function renderVet(){
+  const sick=document.getElementById('vet-sick');
+  const cal=document.getElementById('vet-calendar');
+  if(!sick)return;
+  const sickCows=G.cows.filter(c=>c.sick);
+  sick.innerHTML=sickCows.length?sickCows.map(c=>{const idx=G.cows.indexOf(c);return`
+    <div class="market-item">
+      <span style="font-size:22px">${cowIcon(c)}</span>
+      <div style="flex:1"><div style="font-weight:500">${c.name}</div>
+        <div style="font-size:11px;color:var(--red-t)">${c.disease} · ${c.sickDays} dia(s) · Saúde: ${c.health}%</div>
+      </div>
+      <div style="display:flex;gap:5px">
+        <button onclick="tratarAnimal(${idx},'antibiotico')" class="btn-danger" style="font-size:11px">Antibiótico (${G.inventory.antibiotico})</button>
+        <button onclick="tratarAnimal(${idx},'auto')" class="btn-amber" style="font-size:11px">Vet. R$140</button>
+      </div>
+    </div>`}).join('')+
+    `<div style="margin-top:8px"><button onclick="vetGeral()" class="btn-amber">Veterinário geral — R$300 (trata todos)</button></div>`:
+    '<div style="color:var(--text2);padding:8px 0">Nenhum animal doente. Rebanho saudável! ✓</div>';
+  if(cal){
+    cal.innerHTML=`<div class="metrics-grid">
+      <div class="metric-card"><div class="metric-lbl">Próxima vacinação</div><div class="metric-val" style="color:${G.vetCalendar.nextVacina<=5?'var(--red-t)':'var(--green-t)'}">Dia ${G.day+G.vetCalendar.nextVacina}</div><div class="metric-sub">${G.vetCalendar.nextVacina} dias</div></div>
+      <div class="metric-card"><div class="metric-lbl">Vermifugação</div><div class="metric-val" style="color:${G.vetCalendar.nextVermifugo<=5?'var(--red-t)':'var(--green-t)'}">Dia ${G.day+G.vetCalendar.nextVermifugo}</div><div class="metric-sub">${G.vetCalendar.nextVermifugo} dias</div></div>
+      <div class="metric-card"><div class="metric-lbl">Carrapaticida</div><div class="metric-val">Dia ${G.day+G.vetCalendar.nextCarrapato}</div></div>
+      <div class="metric-card"><div class="metric-lbl">Animais vacinados</div><div class="metric-val">${G.cows.filter(c=>c.vaccinated).length}/${G.cows.length}</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button onclick="vacinarTodos()" class="btn-primary">Vacinar todos (${G.cows.length} doses)</button>
+      <button onclick="vermifugarTodos()" class="btn-amber">Vermifugar todos (${G.cows.length} doses)</button>
+    </div>`;
+  }
+}
+function vetGeral(){
+  if(G.money<300){notify('R$300 necessários.','err');return;}
+  spend(300,'Visita veterinária geral');let n=0;
+  G.cows.forEach(c=>{if(c.sick){c.sick=false;c.sickDays=0;c.health=Math.min(100,c.health+30);n++;}});
+  addLog('👨‍⚕️ Veterinário tratou '+n+' animal(is). R$300.','good');notify(n?' '+n+' curado(s)!':'Todos saudáveis.','ok');
+  renderVet();renderCattle();
+}
+function vacinarTodos(){
+  if(G.inventory.vacina<G.cows.length){notify('Vacinas insuficientes. Precisa '+G.cows.length+' doses.','err');return;}
+  G.inventory.vacina-=G.cows.length;G.cows.forEach(c=>c.vaccinated=true);
+  G.vetCalendar.nextVacina=180;
+  addLog('💉 Vacinação em massa: '+G.cows.length+' animais.','good');notify('Todos vacinados!','ok');
+  checkMissions();renderVet();renderCattle();
+}
+function vermifugarTodos(){
+  if(G.inventory.vermifugo<G.cows.length){notify('Vermífugos insuficientes.','err');return;}
+  G.inventory.vermifugo-=G.cows.length;G.vetCalendar.nextVermifugo=90;
+  addLog('💊 Vermifugação em massa: '+G.cows.length+' animais.','good');notify('Todos vermifugados!','ok');
+  renderVet();
+}
+
+function renderMissoes(){
+  const active=document.getElementById('missions-active');
+  const done=document.getElementById('missions-done');
+  if(!active||!done)return;
+  const openMissions=G.missions.filter(m=>!m.done);
+  const doneMissions=G.missions.filter(m=>m.done);
+  active.innerHTML=openMissions.map(m=>`
+    <div class="mission">
+      <span style="font-size:24px">🎯</span>
+      <div class="mission-info">
+        <div class="mission-name">${m.name}</div>
+        <div class="mission-desc">${m.desc}</div>
+        <div class="prog-wrap" style="margin-top:5px;width:200px"><div class="prog-fill" style="width:${Math.min(100,m.progress/m.target*100)}%;background:var(--green)"></div></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">${m.progress}/${m.target}</div>
+        <div class="mission-reward">Recompensa: R$${m.reward.toLocaleString('pt-BR')} + ${m.xp}xp</div>
+      </div>
+    </div>`).join('')||'<div style="color:var(--text2)">Todas missões concluídas!</div>';
+  done.innerHTML=doneMissions.map(m=>`
+    <div class="mission done"><span style="font-size:20px">✅</span>
+    <div class="mission-info"><div class="mission-name">${m.name}</div><div class="mission-desc">${m.desc}</div></div>
+    </div>`).join('')||'<div style="color:var(--text2)">Nenhuma missão concluída ainda.</div>';
+}
+
+function renderRanking(){
+  const el=document.getElementById('ranking-panel');if(!el)return;
+  const others=[
+    {name:'Fazenda São João',score:85000,cows:120,lvl:8},
+    {name:'Agropecuária Silva',score:62000,cows:95,lvl:7},
+    {name:'Sítio Esperança',score:45000,cows:70,lvl:6},
+    {name:'Fazenda do Artur',score:30000,cows:50,lvl:5},
+    {name:'Ranch Cerrado',score:18000,cows:35,lvl:4},
+  ];
+  const myScore=G.money+G.cows.reduce((s,c)=>s+sellCowValue(c),0);
+  const all=[{name:'Sua Fazenda',score:myScore,cows:G.cows.length,lvl:G.level,isMe:true},...others].sort((a,b)=>b.score-a.score);
+  el.innerHTML=all.map((f,i)=>`
+    <div class="rank-item" style="${f.isMe?'border:0.5px solid var(--green);background:var(--green-bg)':''}">
+      <div class="rank-pos" style="color:${i===0?'var(--gold-t)':i===1?'var(--text2)':i===2?'var(--amber-t)':'var(--text3)'}">${i+1}°</div>
+      <span style="font-size:20px">${f.isMe?'🏠':'🐄'}</span>
+      <div style="flex:1">
+        <div style="font-weight:500${f.isMe?';color:var(--green-t)':''}">${f.name}</div>
+        <div style="font-size:11px;color:var(--text2)">${f.cows} animais · Nível ${f.lvl}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-weight:500">R$${f.score.toLocaleString('pt-BR')}</div>
+        <div style="font-size:10px;color:var(--text3)">patrimônio</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderLog(){
+  const el=document.getElementById('log-box');if(!el)return;
+  el.innerHTML=G.log.slice(0,30).map(l=>`<div class="log-line ${l.type||''}">${l.msg}</div>`).join('');
+}
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+const TABS=['rebanho','pastagem','nutricao','reproducao','fazenda','maquinas','funcionarios','mercado','loja','financas','veterinario','missoes','ranking'];
+function showTab(id){
+  TABS.forEach(t=>{
+    const p=document.getElementById('tab-'+t);if(p)p.classList.toggle('on',t===id);
+  });
+  document.querySelectorAll('.snv').forEach((b,i)=>b.classList.toggle('on',TABS[i]===id));
+  if(id==='pastagem')renderPasture();
+  if(id==='nutricao')renderNutricao();
+  if(id==='reproducao')renderReprod();
+  if(id==='fazenda')renderFazenda();
+  if(id==='maquinas')renderMachines();
+  if(id==='funcionarios')renderFuncionarios();
+  if(id==='mercado')renderMercado();
+  if(id==='loja')renderShop();
+  if(id==='financas')renderFinancas();
+  if(id==='veterinario')renderVet();
+  if(id==='missoes')renderMissoes();
+  if(id==='ranking')renderRanking();
+}
+
+function renderAll(){
+  renderHUD();renderCattle();renderLog();updateBadges();
+}
+
+// ============================================================
+// START
+// ============================================================
+init();
+</script>
+</body>
+</html>
