@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pecuária Simulator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --sky:#87CEEB;--grass:#4a8c2a;--soil:#8B6914;
+  --bg:#0a1f0c;--bg2:#112415;--bg3:#1a3320;--bg4:#223d28;--bg5:#2d5235;
+  --text:#e8f5e0;--text2:#9ab890;--text3:#5a7a52;
+  --bord:rgba(100,180,80,0.12);--bord2:rgba(100,180,80,0.28);
+  --green:#3d9e20;--gbg:rgba(61,158,32,0.18);--gt:#72e040;
+  --red:#c03030;--rbg:rgba(192,48,48,0.18);--rt:#ff6060;
+  --amber:#c07818;--abg:rgba(192,120,24,0.18);--at:#ffa030;
+  --blue:#1a68c0;--bbg:rgba(26,104,192,0.18);--bt:#50a8ff;
+  --purple:#6840c0;--pubg:rgba(104,64,192,0.18);--put:#a870ff;
+  --teal:#189870;--tbg:rgba(24,152,112,0.18);--tt:#40d0a0;
+  --gold:#c09018;--gobg:rgba(192,144,24,0.18);--got:#ffc030;
+  --r:10px;--rl:16px;
+  --font:'Segoe UI',system-ui,sans-serif;
+  --sb:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:var(--font);font-size:14px;color:var(--text);display:flex;flex-direction:column}
+
+/* TOPBAR */
+#topbar{background:linear-gradient(180deg,var(--bg2) 0%,var(--bg3) 100%);border-bottom:1px solid var(--bord2);padding:8px 12px;flex-shrink:0;display:flex;align-items:center;gap:10px}
+.logo{font-size:15px;font-weight:800;color:var(--gt);letter-spacing:.06em;white-space:nowrap;flex-shrink:0}
+.logo em{color:var(--at);font-style:normal}
+#hud-scroll{display:flex;gap:5px;flex:1;overflow-x:auto;scrollbar-width:none}
+#hud-scroll::-webkit-scrollbar{display:none}
+.hc{background:var(--bg4);border:0.5px solid var(--bord2);border-radius:8px;padding:5px 9px;text-align:center;flex-shrink:0;min-width:58px}
+.hc-v{font-size:13px;font-weight:700;line-height:1.2;white-space:nowrap}
+.hc-l{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+
+/* WEATHER STRIP */
+#wstrip{padding:6px 14px;background:var(--bg3);border-bottom:0.5px solid var(--bord);display:flex;align-items:center;gap:8px;font-size:12px;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+#wstrip::-webkit-scrollbar{display:none}
+.spill{font-size:10px;padding:3px 10px;border-radius:20px;background:var(--bg4);color:var(--text2);white-space:nowrap;flex-shrink:0;margin-left:auto}
+
+/* CONTENT */
+#content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:10px 10px calc(68px + var(--sb))}
+
+/* BOTTOM NAV */
+#bnav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--bord2);display:flex;padding-bottom:var(--sb);z-index:100}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;padding:7px 2px 5px;cursor:pointer;color:var(--text3);font-size:9px;letter-spacing:.03em;text-transform:uppercase;border:none;background:transparent;transition:color .15s;position:relative}
+.bn.on{color:var(--gt)}
+.bn svg{width:22px;height:22px;margin-bottom:2px}
+.bn-dot{position:absolute;top:5px;right:calc(50% - 14px);background:var(--red);color:white;font-size:8px;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
+
+/* PANELS */
+.panel{display:none}.panel.on{display:block}
+
+/* CARDS */
+.card{background:var(--bg2);border:0.5px solid var(--bord);border-radius:var(--rl);padding:14px;margin-bottom:10px;overflow:hidden}
+.card-title{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+/* BUTTONS */
+button{font-family:var(--font);font-size:13px;padding:9px 14px;border:0.5px solid var(--bord2);border-radius:var(--r);background:var(--bg4);color:var(--text);cursor:pointer;transition:all .15s;touch-action:manipulation}
+button:active{transform:scale(.95);filter:brightness(.85)}
+button:disabled{opacity:.3;pointer-events:none}
+.bf{width:100%;padding:12px;font-size:14px;font-weight:600}
+.bp{background:var(--gbg);border-color:var(--green);color:var(--gt)}
+.bb{background:var(--bbg);border-color:var(--blue);color:var(--bt)}
+.ba{background:var(--abg);border-color:var(--amber);color:var(--at)}
+.br{background:var(--rbg);border-color:var(--red);color:var(--rt)}
+.bu{background:var(--pubg);border-color:var(--purple);color:var(--put)}
+.bg2{background:var(--gobg);border-color:var(--gold);color:var(--got)}
+.bt2{background:var(--tbg);border-color:var(--teal);color:var(--tt)}
+
+/* ACTION ROW */
+.ar{display:grid;gap:7px;margin-bottom:10px}
+.ar3{grid-template-columns:repeat(3,1fr)}.ar2{grid-template-columns:repeat(2,1fr)}.ar4{grid-template-columns:repeat(4,1fr)}
+
+/* CHIPS */
+.chip{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;display:inline-block;white-space:nowrap}
+.cok{background:var(--gbg);color:var(--gt)}
+.cw{background:var(--abg);color:var(--at)}
+.ce{background:var(--rbg);color:var(--rt)}
+.cb{background:var(--bbg);color:var(--bt)}
+.cpu{background:var(--pubg);color:var(--put)}
+.ct{background:var(--tbg);color:var(--tt)}
+.cgo{background:var(--gobg);color:var(--got)}
+
+/* METRICS */
+.mg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px}
+.mg3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+.mg4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.mc{background:var(--bg3);border:0.5px solid var(--bord);border-radius:var(--r);padding:10px 12px}
+.mc-l{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.mc-v{font-size:18px;font-weight:700;line-height:1.2}
+.mc-s{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* PROGRESS */
+.pw{height:5px;background:var(--bord);border-radius:3px;overflow:hidden}
+.pf{height:100%;border-radius:3px;transition:width .4s}
+
+/* CATTLE VISUAL GRID */
+.cvg{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}
+@media(min-width:480px){.cvg{grid-template-columns:repeat(5,1fr)}}
+@media(min-width:700px){.cvg{grid-template-columns:repeat(6,1fr)}}
+.cw-card{background:var(--bg3);border:1px solid var(--bord);border-radius:var(--rl);padding:8px 5px;cursor:pointer;text-align:center;position:relative;transition:all .2s;overflow:hidden}
+.cw-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:6px;background:linear-gradient(0deg,var(--grass) 0%,transparent 100%);opacity:.3}
+.cw-card:active{transform:scale(.93)}
+.cw-card.sel{border-color:var(--green);background:var(--gbg);box-shadow:0 0 0 1px var(--green)}
+.cw-card.sick{border-color:var(--red);background:var(--rbg)}
+.cw-card.preg{border-color:var(--purple)}
+.cw-card.well{border-color:var(--bord2)}
+.cw-anim{width:100%;height:52px;display:flex;align-items:flex-end;justify-content:center}
+.cw-name{font-size:9px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.cw-kg{font-size:10px;color:var(--text3);margin-top:1px;font-weight:600}
+.bbar{height:3px;background:rgba(0,0,0,.3);border-radius:2px;margin-top:3px;overflow:hidden}
+.bfill{height:100%;border-radius:2px}
+.cdot{position:absolute;width:8px;height:8px;border-radius:50%;top:4px}
+.cdot-r{right:4px}.cdot-l{left:4px}
+
+/* PHASE BAR */
+.phbar{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:10px}
+.phb{background:var(--bg3);border:0.5px solid var(--bord);border-radius:var(--r);padding:8px 4px;text-align:center;cursor:pointer;transition:all .2s}
+.phb:active{transform:scale(.95)}
+.phb-n{font-size:17px;font-weight:700;display:block;line-height:1.2}
+.phb-l{font-size:9px;color:var(--text2);margin-top:1px}
+
+/* SHEET */
+#dsheet{position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--bg2);border-top:2px solid var(--bord2);border-radius:20px 20px 0 0;padding:16px 16px calc(16px + var(--sb));transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);max-height:85vh;overflow-y:auto}
+#dsheet.open{transform:translateY(0)}
+.sh{width:44px;height:5px;background:var(--bord2);border-radius:3px;margin:0 auto 16px}
+#dback{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:199;display:none;backdrop-filter:blur(3px)}
+#dback.on{display:block}
+
+/* DETAIL ROWS */
+.dr{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--bord)}
+.dr:last-child{border-bottom:none}
+.drl{color:var(--text2);font-size:12px}
+
+/* LIST ITEMS */
+.li{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border:0.5px solid var(--bord);border-radius:var(--r);margin-bottom:7px}
+.li-info{flex:1;min-width:0}
+.li-n{font-weight:600;font-size:13px}
+.li-s{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* SHOP CARDS */
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+@media(min-width:600px){.sg{grid-template-columns:repeat(3,1fr)}}
+.sc{background:var(--bg3);border:0.5px solid var(--bord);border-radius:var(--rl);padding:13px;overflow:hidden;position:relative}
+.sc-img{width:100%;height:70px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;background:var(--bg4);border-radius:var(--r);overflow:hidden}
+.sc-n{font-weight:700;font-size:13px;margin-bottom:3px}
+.sc-d{font-size:11px;color:var(--text2);margin-bottom:6px;line-height:1.4}
+.sc-p{font-size:13px;color:var(--at);font-weight:700;margin-bottom:7px}
+
+/* SUBNAV */
+.snav{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:9px;margin-bottom:9px;border-bottom:0.5px solid var(--bord)}
+.snav::-webkit-scrollbar{display:none}
+.snb{font-size:12px;padding:6px 14px;border-radius:20px;white-space:nowrap;border:0.5px solid var(--bord2);background:var(--bg4);color:var(--text2);cursor:pointer;flex-shrink:0;transition:all .15s}
+.snb.on{background:var(--gbg);color:var(--gt);border-color:var(--green)}
+
+/* PIQUETES */
+.pqg{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+@media(min-width:480px){.pqg{grid-template-columns:repeat(4,1fr)}}
+.pq{border-radius:var(--r);border:1px solid var(--bord);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;padding:8px 4px;position:relative;overflow:hidden;aspect-ratio:1}
+.pq:active{transform:scale(.93)}
+.pq.sel{border-color:var(--green)}
+.pq-l{font-size:9px;color:rgba(255,255,255,.8);text-align:center;margin-top:3px;line-height:1.4;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.7)}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:7px 8px;color:var(--text3);font-weight:400;border-bottom:0.5px solid var(--bord2);font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:7px 8px;border-bottom:0.5px solid var(--bord)}
+.tr{text-align:right}
+
+/* AUCTION */
+.aui{background:var(--bg3);border:1px solid var(--bord2);border-radius:var(--rl);padding:14px;margin-bottom:10px;position:relative;overflow:hidden}
+.aui::before{content:'LEILÃO';position:absolute;top:8px;right:10px;font-size:9px;letter-spacing:.1em;color:var(--got);opacity:.5;font-weight:700}
+
+/* MARKET */
+.mi{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--r);margin-bottom:6px;border:0.5px solid var(--bord)}
+
+/* TOAST */
+#toast{position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-16px);opacity:0;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;z-index:500;transition:all .25s;pointer-events:none;white-space:nowrap;max-width:88vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.tok{background:var(--gt);color:#0a1f0c}
+#toast.terr{background:var(--rt);color:#fff}
+#toast.twarn{background:var(--at);color:#0a1f0c}
+#toast.tgold{background:var(--got);color:#0a1f0c}
+
+/* EVENT BANNER */
+#evbanner{display:none;padding:10px 14px;background:var(--gobg);border:1px solid var(--gold);border-radius:var(--r);margin-bottom:10px;font-size:12px;color:var(--got);font-weight:500}
+#evbanner.show{display:block}
+
+/* MORE MENU */
+#moresheet{position:fixed;bottom:0;left:0;right:0;z-index:250;background:var(--bg2);border-top:2px solid var(--bord2);border-radius:20px 20px 0 0;padding:16px;padding-bottom:calc(16px + var(--sb));transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
+#moreback{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:249;display:none}
+
+/* LOAN */
+.loan{background:var(--bg3);border-radius:var(--r);padding:10px 12px;margin-bottom:7px;border:0.5px solid var(--bord)}
+
+/* FAIR */
+.fair{background:linear-gradient(135deg,var(--gobg),var(--gbg));border:1px solid var(--gold);border-radius:var(--rl);padding:14px;margin-bottom:10px}
+
+/* RANK */
+.rnk{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--r);margin-bottom:6px;border:0.5px solid var(--bord)}
+
+/* MISSION */
+.mss{background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:7px;border:0.5px solid var(--bord)}
+.mss.done{opacity:.55;border-color:var(--green)}
+
+/* LOG */
+.lbox{max-height:140px;overflow-y:auto;font-size:11px;color:var(--text2);line-height:1.9}
+.ll{border-bottom:0.5px solid var(--bord);padding:2px 0}
+.ll.alert{color:var(--rt)}.ll.good{color:var(--gt)}.ll.info{color:var(--bt)}.ll.gold{color:var(--got)}
+
+footer{text-align:center;font-size:10px;color:var(--text3);padding:12px;margin-bottom:60px}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+<div id="evbanner"></div>
+
+<!-- ===== SVG DEFINITIONS ===== -->
+<svg width="0" height="0" style="position:absolute">
+<defs>
+<!-- COW SVG -->
+<symbol id="svg-cow-f" viewBox="0 0 80 60">
+  <ellipse cx="42" cy="38" rx="22" ry="14" fill="#D4A96A"/>
+  <ellipse cx="42" cy="37" rx="20" ry="12" fill="#E8C48A"/>
+  <circle cx="28" cy="28" r="11" fill="#D4A96A"/>
+  <circle cx="28" cy="27" r="9" fill="#E8C48A"/>
+  <ellipse cx="22" cy="22" rx="4" ry="6" fill="#E8C48A" transform="rotate(-10,22,22)"/>
+  <ellipse cx="34" cy="22" rx="4" ry="6" fill="#E8C48A" transform="rotate(10,34,22)"/>
+  <circle cx="25" cy="28" r="2.5" fill="#3a2010"/>
+  <circle cx="31" cy="28" r="2.5" fill="#3a2010"/>
+  <circle cx="25.5" cy="27.5" r="1" fill="white"/>
+  <circle cx="31.5" cy="27.5" r="1" fill="white"/>
+  <ellipse cx="28" cy="34" rx="4" ry="2.5" fill="#C49060"/>
+  <ellipse cx="27" cy="35" rx="1" ry="1.5" fill="#a06040"/>
+  <ellipse cx="29" cy="35" rx="1" ry="1.5" fill="#a06040"/>
+  <rect x="30" y="48" width="5" height="10" rx="2" fill="#C49060"/>
+  <rect x="37" y="50" width="5" height="8" rx="2" fill="#C49060"/>
+  <rect x="50" y="48" width="5" height="10" rx="2" fill="#C49060"/>
+  <rect x="57" y="50" width="5" height="8" rx="2" fill="#C49060"/>
+  <path d="M62 38 Q70 36 72 42" stroke="#C49060" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse cx="45" cy="50" rx="5" ry="3" fill="#E8B0B0" opacity=".7"/>
+  <ellipse cx="47" cy="52" rx="1.5" ry="2" fill="#C09090"/>
+  <ellipse cx="43" cy="52" rx="1.5" ry="2" fill="#C09090"/>
+  <circle cx="40" cy="38" r="3" fill="#8B4513" opacity=".4"/>
+  <circle cx="50" cy="32" r="4" fill="#6B3010" opacity=".3"/>
+</symbol>
+<symbol id="svg-cow-m" viewBox="0 0 80 60">
+  <ellipse cx="42" cy="38" rx="24" ry="15" fill="#8B7355"/>
+  <ellipse cx="42" cy="37" rx="22" ry="13" fill="#A08060"/>
+  <circle cx="28" cy="27" r="12" fill="#8B7355"/>
+  <circle cx="28" cy="26" r="10" fill="#A08060"/>
+  <ellipse cx="21" cy="20" rx="4.5" ry="7" fill="#A08060" transform="rotate(-12,21,20)"/>
+  <ellipse cx="35" cy="20" rx="4.5" ry="7" fill="#A08060" transform="rotate(12,35,20)"/>
+  <path d="M20 16 Q18 10 22 13" stroke="#D4A020" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M36 16 Q38 10 34 13" stroke="#D4A020" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="25" cy="27" r="2.8" fill="#1a0a00"/>
+  <circle cx="31" cy="27" r="2.8" fill="#1a0a00"/>
+  <circle cx="25.5" cy="26.5" r="1" fill="white"/>
+  <circle cx="31.5" cy="26.5" r="1" fill="white"/>
+  <ellipse cx="28" cy="33" rx="5" ry="3" fill="#805030"/>
+  <rect x="29" y="48" width="6" height="11" rx="2" fill="#8B7355"/>
+  <rect x="37" y="50" width="6" height="9" rx="2" fill="#8B7355"/>
+  <rect x="50" y="48" width="6" height="11" rx="2" fill="#8B7355"/>
+  <rect x="58" y="50" width="6" height="9" rx="2" fill="#8B7355"/>
+  <path d="M64 38 Q73 35 74 43" stroke="#8B7355" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+</symbol>
+<symbol id="svg-calf" viewBox="0 0 60 50">
+  <ellipse cx="30" cy="30" rx="15" ry="10" fill="#E8D0A0"/>
+  <circle cx="20" cy="22" r="9" fill="#E8D0A0"/>
+  <ellipse cx="14" cy="16" rx="3" ry="5" fill="#E8D0A0" transform="rotate(-15,14,16)"/>
+  <ellipse cx="26" cy="16" rx="3" ry="5" fill="#E8D0A0" transform="rotate(15,26,16)"/>
+  <circle cx="17" cy="22" r="2" fill="#3a2010"/>
+  <circle cx="23" cy="22" r="2" fill="#3a2010"/>
+  <circle cx="17.5" cy="21.5" r=".8" fill="white"/>
+  <circle cx="23.5" cy="21.5" r=".8" fill="white"/>
+  <rect x="22" y="38" width="4" height="8" rx="1.5" fill="#E8D0A0"/>
+  <rect x="28" y="39" width="4" height="7" rx="1.5" fill="#E8D0A0"/>
+  <rect x="37" y="38" width="4" height="8" rx="1.5" fill="#E8D0A0"/>
+  <rect x="43" y="39" width="4" height="7" rx="1.5" fill="#E8D0A0"/>
+  <path d="M46 30 Q52 29 53 34" stroke="#E8D0A0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+</symbol>
+<symbol id="svg-bull" viewBox="0 0 80 60">
+  <ellipse cx="42" cy="36" rx="25" ry="17" fill="#5C4028"/>
+  <ellipse cx="42" cy="35" rx="23" ry="15" fill="#7A5535"/>
+  <circle cx="27" cy="25" r="14" fill="#5C4028"/>
+  <circle cx="27" cy="24" r="12" fill="#7A5535"/>
+  <path d="M15 14 Q10 5 18 10" stroke="#C8A000" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M39 14 Q44 5 36 10" stroke="#C8A000" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="19" cy="18" rx="5" ry="8" fill="#7A5535" transform="rotate(-15,19,18)"/>
+  <ellipse cx="35" cy="18" rx="5" ry="8" fill="#7A5535" transform="rotate(15,35,18)"/>
+  <circle cx="23" cy="25" r="3.5" fill="#0a0500"/>
+  <circle cx="31" cy="25" r="3.5" fill="#0a0500"/>
+  <circle cx="24" cy="24" r="1.3" fill="white"/>
+  <circle cx="32" cy="24" r="1.3" fill="white"/>
+  <ellipse cx="27" cy="32" rx="6" ry="4" fill="#5C4028"/>
+  <ellipse cx="28" cy="35" rx="2" ry="3" fill="#9a7050" opacity=".7"/>
+  <rect x="28" y="47" width="7" height="12" rx="2.5" fill="#5C4028"/>
+  <rect x="37" y="49" width="7" height="10" rx="2.5" fill="#5C4028"/>
+  <rect x="50" y="47" width="7" height="12" rx="2.5" fill="#5C4028"/>
+  <rect x="59" y="49" width="7" height="10" rx="2.5" fill="#5C4028"/>
+  <path d="M66 36 Q75 32 76 41" stroke="#5C4028" stroke-width="4" fill="none" stroke-linecap="round"/>
+</symbol>
+<!-- TRACTOR -->
+<symbol id="svg-tractor" viewBox="0 0 100 70">
+  <rect x="30" y="25" width="45" height="28" rx="4" fill="#2d6e2d"/>
+  <rect x="52" y="15" width="22" height="20" rx="3" fill="#3a8a3a"/>
+  <rect x="54" y="17" width="18" height="10" rx="2" fill="#87CEEB" opacity=".8"/>
+  <rect x="30" y="30" width="12" height="8" rx="1" fill="#1a4a1a"/>
+  <circle cx="45" cy="55" r="14" fill="#1a1a1a"/>
+  <circle cx="45" cy="55" r="11" fill="#333"/>
+  <circle cx="45" cy="55" r="5" fill="#555"/>
+  <circle cx="80" cy="58" r="9" fill="#1a1a1a"/>
+  <circle cx="80" cy="58" r="7" fill="#333"/>
+  <circle cx="80" cy="58" r="3" fill="#555"/>
+  <rect x="10" y="40" width="25" height="6" rx="2" fill="#8B6914"/>
+  <rect x="8" y="37" width="5" height="12" rx="1" fill="#6B4A10"/>
+  <rect x="70" y="28" width="8" height="30" rx="2" fill="#2d6e2d"/>
+  <circle cx="88" cy="35" r="3" fill="#ff4400" opacity=".8"/>
+</symbol>
+<!-- WORKER -->
+<symbol id="svg-worker" viewBox="0 0 50 70">
+  <circle cx="25" cy="14" r="11" fill="#F4C28A"/>
+  <rect x="5" y="28" width="40" height="28" rx="6" fill="#4a7ac8"/>
+  <rect x="8" y="28" width="12" height="28" rx="4" fill="#3a6ab8"/>
+  <rect x="30" y="28" width="12" height="28" rx="4" fill="#3a6ab8"/>
+  <rect x="14" y="54" width="10" height="16" rx="4" fill="#2a3a6a"/>
+  <rect x="26" y="54" width="10" height="16" rx="4" fill="#2a3a6a"/>
+  <ellipse cx="22" cy="6" rx="12" ry="7" fill="#8B6914"/>
+  <rect x="10" y="8" width="30" height="5" rx="2" fill="#8B6914"/>
+  <circle cx="20" cy="14" r="2" fill="#3a2010" opacity=".7"/>
+  <circle cx="30" cy="14" r="2" fill="#3a2010" opacity=".7"/>
+  <rect x="4" y="30" width="8" height="20" rx="3" fill="#4a7ac8"/>
+  <rect x="38" y="30" width="8" height="20" rx="3" fill="#4a7ac8"/>
+</symbol>
+<!-- VET -->
+<symbol id="svg-vet" viewBox="0 0 50 70">
+  <circle cx="25" cy="14" r="11" fill="#F4C28A"/>
+  <rect x="5" y="28" width="40" height="28" rx="6" fill="#e8e8f8"/>
+  <rect x="14" y="54" width="10" height="16" rx="4" fill="#c0c0e8"/>
+  <rect x="26" y="54" width="10" height="16" rx="4" fill="#c0c0e8"/>
+  <rect x="21" y="32" width="8" height="20" rx="2" fill="#e04040" opacity=".8"/>
+  <rect x="14" y="39" width="22" height="6" rx="2" fill="#e04040" opacity=".8"/>
+  <rect x="4" y="30" width="8" height="20" rx="3" fill="#d8d8f0"/>
+  <rect x="38" y="30" width="8" height="20" rx="3" fill="#d8d8f0"/>
+  <circle cx="20" cy="14" r="2" fill="#3a2010" opacity=".7"/>
+  <circle cx="30" cy="14" r="2" fill="#3a2010" opacity=".7"/>
+</symbol>
+<!-- GRASS PIQUETE -->
+<symbol id="svg-grass" viewBox="0 0 60 40">
+  <rect width="60" height="40" fill="#2d5a1a"/>
+  <ellipse cx="10" cy="40" rx="8" ry="12" fill="#3d7a2a"/>
+  <ellipse cx="20" cy="40" rx="7" ry="10" fill="#4a8a30"/>
+  <ellipse cx="32" cy="40" rx="9" ry="13" fill="#3d7a2a"/>
+  <ellipse cx="44" cy="40" rx="7" ry="11" fill="#4a8a30"/>
+  <ellipse cx="55" cy="40" rx="6" ry="9" fill="#3d7a2a"/>
+  <ellipse cx="5" cy="40" rx="4" ry="8" fill="#5a9a3a"/>
+  <ellipse cx="27" cy="40" rx="5" ry="9" fill="#5a9a3a"/>
+  <ellipse cx="50" cy="40" rx="5" ry="7" fill="#5a9a3a"/>
+</symbol>
+<!-- DRY PIQUETE -->
+<symbol id="svg-dry" viewBox="0 0 60 40">
+  <rect width="60" height="40" fill="#8B6914"/>
+  <ellipse cx="10" cy="40" rx="5" ry="6" fill="#A07820"/>
+  <ellipse cx="25" cy="40" rx="6" ry="7" fill="#9a7018"/>
+  <ellipse cx="42" cy="40" rx="5" ry="6" fill="#A07820"/>
+  <ellipse cx="55" cy="40" rx="4" ry="5" fill="#9a7018"/>
+</symbol>
+</defs>
+</svg>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="logo">🐄 PECUÁRIA<em>SIM</em></div>
+  <div id="hud-scroll"></div>
+</div>
+<div id="wstrip"></div>
+
+<!-- CONTENT -->
+<div id="content">
+  <div id="evbanner"></div>
+
+  <!-- REBANHO -->
+  <div id="tab-rebanho" class="panel on">
+    <div class="ar ar3">
+      <button class="bp" onclick="actAll('alimentar')">🌾 Alimentar</button>
+      <button class="bb" onclick="actAll('ordenhar')">🥛 Ordenhar</button>
+      <button class="ba" onclick="actAll('vender-leite')">💰 Vender leite</button>
+    </div>
+    <div class="ar ar2">
+      <button class="bt2" onclick="coberturaTouro()">🐃 Cobertura</button>
+      <button style="font-weight:700;font-size:14px;background:var(--gbg);border-color:var(--green);color:var(--gt)" onclick="nextDay()">📅 Próximo dia →</button>
+    </div>
+    <div class="phbar" id="phbar"></div>
+    <div class="cvg" id="cvg"></div>
+    <div class="card">
+      <div class="card-title">Registro do dia</div>
+      <div class="lbox" id="lbox"></div>
+    </div>
+  </div>
+
+  <!-- PASTAGEM -->
+  <div id="tab-pastagem" class="panel">
+    <div class="card">
+      <div class="card-title">Mapa de piquetes
+        <button class="bp" style="font-size:11px;padding:5px 10px" onclick="addPq()">+ Novo R$500</button>
+      </div>
+      <div class="pqg" id="pqg"></div>
+      <div id="pqdet"></div>
+    </div>
+    <div class="mg3" id="pstats"></div>
+  </div>
+
+  <!-- NUTRIÇÃO -->
+  <div id="tab-nutricao" class="panel">
+    <div class="card"><div class="card-title">Estoque de insumos</div><div id="nstock"></div></div>
+    <div class="card"><div class="card-title">Dietas recomendadas</div><div id="ndieta"></div></div>
+  </div>
+
+  <!-- REPRODUÇÃO -->
+  <div id="tab-reproducao" class="panel"><div id="reprod"></div></div>
+
+  <!-- LEILÃO -->
+  <div id="tab-leilao" class="panel">
+    <div class="card">
+      <div class="card-title">🏆 Leilão — Encerra dia <span id="aday">—</span></div>
+      <div id="alots"></div>
+    </div>
+    <div class="card"><div class="card-title">Vender no leilão (+15%)</div><div id="asell"></div></div>
+  </div>
+
+  <!-- FAZENDA -->
+  <div id="tab-fazenda" class="panel">
+    <div class="snav" id="fsub">
+      <button class="snb on" onclick="fsTab('infra')">Infraestrutura</button>
+      <button class="snb" onclick="fsTab('maq')">Máquinas</button>
+      <button class="snb" onclick="fsTab('staff')">Equipe</button>
+    </div>
+    <div id="fs-infra">
+      <div class="card"><div class="card-title">Construído</div><div id="bdone"></div></div>
+      <div class="card"><div class="card-title">Disponível</div><div class="sg" id="bavail"></div></div>
+    </div>
+    <div id="fs-maq" style="display:none"><div class="card"><div class="card-title">Equipamentos</div><div class="sg" id="mlist"></div></div></div>
+    <div id="fs-staff" style="display:none">
+      <div class="card"><div class="card-title">Equipe atual</div><div id="slist"></div></div>
+      <div class="card"><div class="card-title">Contratar</div><div class="sg" id="hlist"></div></div>
+    </div>
+  </div>
+
+  <!-- MERCADO -->
+  <div id="tab-mercado" class="panel">
+    <div class="snav" id="msub">
+      <button class="snb on" onclick="mTab('precos')">Cotações</button>
+      <button class="snb" onclick="mTab('contratos')">Contratos</button>
+      <button class="snb" onclick="mTab('jornal')">Jornal</button>
+    </div>
+    <div id="mp-precos"><div class="card"><div id="mprices"></div></div></div>
+    <div id="mp-contratos" style="display:none"><div class="card"><div id="mcont"></div></div></div>
+    <div id="mp-jornal" style="display:none"><div class="card"><div class="card-title">📰 Jornal do Agro</div><div id="mjornal"></div></div></div>
+  </div>
+
+  <!-- LOJA -->
+  <div id="tab-loja" class="panel">
+    <div class="snav">
+      <button class="snb on" onclick="lTab('animais')">Animais</button>
+      <button class="snb" onclick="lTab('insumos')">Medicamentos</button>
+      <button class="snb" onclick="lTab('racao')">Rações</button>
+    </div>
+    <div id="lt-animais"><div class="sg" id="lanimais"></div></div>
+    <div id="lt-insumos" style="display:none"><div class="sg" id="linsumos"></div></div>
+    <div id="lt-racao" style="display:none"><div class="sg" id="lracao"></div></div>
+  </div>
+
+  <!-- FINANÇAS -->
+  <div id="tab-financas" class="panel">
+    <div class="mg" id="finmet"></div>
+    <div class="card"><div class="card-title">Histórico mensal</div><div id="finhist"></div></div>
+    <div class="card"><div class="card-title">Financiamento rural</div><div id="finloan"></div></div>
+    <div class="card"><div class="card-title">🛡️ Seguro rural</div><div id="finseg"></div></div>
+  </div>
+
+  <!-- VET -->
+  <div id="tab-vet" class="panel">
+    <div class="card"><div class="card-title">Animais doentes <span id="vetbadge"></span></div><div id="vetsick"></div></div>
+    <div class="card"><div class="card-title">Calendário sanitário</div><div id="vetcal"></div></div>
+  </div>
+
+  <!-- MISSÕES -->
+  <div id="tab-missoes" class="panel">
+    <div class="mg4" id="xparea"></div>
+    <div class="card"><div class="card-title">Em andamento</div><div id="mssact"></div></div>
+    <div class="card"><div class="card-title">Concluídas</div><div id="mssdone"></div></div>
+    <div class="card"><div class="card-title">🌾 Feira agropecuária</div><div id="fairpanel"></div></div>
+  </div>
+
+  <!-- RANKING -->
+  <div id="tab-ranking" class="panel">
+    <div class="card"><div class="card-title">Ranking regional</div><div id="rklist"></div></div>
+    <div class="card"><div class="card-title">Estatísticas</div><div class="mg" id="rkstats"></div></div>
+  </div>
+
+  <footer>PECUÁRIA SIMULATOR v3.0 · Simulação completa de fazenda</footer>
+</div>
+
+<!-- BOTTOM NAV -->
+<div id="bnav">
+  <button class="bn on" id="bn-rebanho" onclick="showTab('rebanho')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 10c0-3.3 2.7-6 6-6s6 2.7 6 6c0 1.5-.5 2.9-1.4 4H14l-2 6H8l-2-6H5.4A5.9 5.9 0 014 10z"/><circle cx="19" cy="7" r="3"/></svg>
+    Rebanho
+  </button>
+  <button class="bn" id="bn-pastagem" onclick="showTab('pastagem')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8 2 4 5 4 9c0 2 .8 3.8 2 5.1V20h12v-5.9c1.2-1.3 2-3.1 2-5.1 0-4-4-7-8-7z"/></svg>
+    Pasto
+  </button>
+  <button class="bn" id="bn-leilao" onclick="showTab('leilao')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    Leilão
+  </button>
+  <button class="bn" id="bn-fazenda" onclick="showTab('fazenda')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    Fazenda
+  </button>
+  <button class="bn" id="bn-mercado" onclick="showTab('mercado')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h18v4H3zm0 6h18v4H3zm0 6h18v4H3z"/></svg>
+    Mercado
+  </button>
+  <button class="bn" id="bn-mais" onclick="showMore()">
+    <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+    Mais
+  </button>
+</div>
+
+<!-- MORE SHEET -->
+<div id="moresheet">
+  <div class="sh"></div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px">
+    <button class="bn" style="flex-direction:column;padding:12px 4px;background:var(--bg3);border-radius:var(--r);border:0.5px solid var(--bord);width:100%;height:auto" onclick="showTab('nutricao');closeMore()">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M17 8C8 10 5.9 16.17 3.82 21h3.42c.5-1.26 1.03-2.5 1.76-3.69A7 7 0 0121 12c-1.1 0-2.15.2-3.14.56L15 10l2-2z"/></svg>
+      <span style="font-size:10px;text-transform:uppercase;letter-spacing:.03em;margin-top:4px">Nutrição</span>
+    </button>
+    <button class="bn" style="flex-direction:column;padding:12px 4px;background:var(--bg3);border-radius:var(--r);border:0.5px solid var(--bord);width:100%;height:auto" onclick="showTab('reproducao');closeMore()">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9zm0 4c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z"/></svg>
+      <span style="font-size:10px;text-transform:uppercase;letter-spacing:.03em;margin-top:4px">Reprod.</span>
+    </button>
+    <button class="bn" id="more-vet" style="flex-direction:column;padding:12px 4px;background:var(--bg3);border-radius:var(--r);border:0.5px solid var(--bord);width:100%;height:auto;position:relative" onclick="showTab('vet');closeMore()">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+      <span style="font-size:10px;text-transform:uppercase;letter-spacing:.03em;margin-top:4px">Vet.</span>
+    </button>
+    <button class="bn" style="flex-direction:column;padding:12px 4px;background:var(--bg3);border-radius:var(--r);border:0.5px solid var(--bord);width:100%;height:auto" onclick="showTab('loja');closeMore()">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96C5 16.1 5.9 17 7 17h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63H19c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0023.46 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+      <span style="font-size:10px;text-transform:uppercase;letter-spacing:.03em;margin-top:4px">Loja</span>
+    </button>
+    <button class="bn" style="flex-direction:column;padding:12px 4px;background:var(--bg3);border-radius:var(--r);border:0.5px solid var(--bord);width:100%;height:auto" onclick="showTab('financas');closeMore()">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      <span style="font-size:10px;text-transform:uppercase;letter-spacing:.03em;margin-top:4px">Finanças</span>
+    </button>
+    <button class="bn" style="flex-direction:column;padding:12px 4px;background:var(--bg3);border-radius:var(--r);border:0.5px solid var(--bord);width:100%;height:auto" onclick="showTab('missoes');closeMore()">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+      <span style="font-size:10px;text-transform:uppercase;letter-spacing:.03em;margin-top:4px">Missões</span>
+    </button>
+    <button class="bn" style="flex-direction:column;padding:12px 4px;background:var(--bg3);border-radius:var(--r);border:0.5px solid var(--bord);width:100%;height:auto" onclick="showTab('ranking');closeMore()">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>
+      <span style="font-size:10px;text-transform:uppercase;letter-spacing:.03em;margin-top:4px">Ranking</span>
+    </button>
+  </div>
+</div>
+<div id="moreback" onclick="closeMore()"></div>
+
+<!-- DETAIL SHEET -->
+<div id="dsheet">
+  <div class="sh"></div>
+  <div id="dscont"></div>
+</div>
+<div id="dback" onclick="closeSheet()"></div>
+
+<script>
+// ========== SVG HELPERS ==========
+function cowSVG(breed,phase,w,h){
+  w=w||60;h=h||46;
+  let sym='svg-cow-f';
+  if(phase==='bezerro')sym='svg-calf';
+  else if(breed==='touro'||breed==='touroBraford')sym='svg-bull';
+  else if(['neloreM','angus','senepol'].includes(breed))sym='svg-cow-m';
+  return`<svg width="${w}" height="${h}" viewBox="0 0 80 60"><use href="#${sym}"/></svg>`;
+}
+function tractorSVG(w,h){return`<svg width="${w||70}" height="${h||49}" viewBox="0 0 100 70"><use href="#svg-tractor"/></svg>`;}
+function workerSVG(type,w,h){
+  const sym=type==='veterinario'||type==='vet'?'svg-vet':'svg-worker';
+  return`<svg width="${w||35}" height="${h||49}" viewBox="0 0 50 70"><use href="#${sym}"/></svg>`;
+}
+function grassSVG(pct,w,h){
+  const sym=pct<20?'svg-dry':'svg-grass';
+  const opacity=0.3+(pct/100)*0.7;
+  return`<svg width="${w||60}" height="${h||40}" viewBox="0 0 60 40" style="opacity:${opacity}"><use href="#${sym}"/></svg>`;
+}
+
+// ========== DATA ==========
+const SEASONS=[
+  {n:'Verão',ic:'☀️',desc:'Calor. Risco de estresse.',pm:0.7,mm:0.9,sm:1.1,wm:0.95},
+  {n:'Outono',ic:'🍂',desc:'Clima ameno. Boa produção.',pm:1.0,mm:1.0,sm:0.9,wm:1.0},
+  {n:'Inverno',ic:'❄️',desc:'Pasto lento. Mais ração.',pm:0.4,mm:0.85,sm:1.3,wm:0.85},
+  {n:'Primavera',ic:'🌿',desc:'Pasto abundante. Alta produção.',pm:1.3,mm:1.1,sm:0.8,wm:1.1}
+];
+const WEATHERS=[
+  {n:'Ensolarado',ic:'☀️',pm:0.9,mm:1.0,sk:0},
+  {n:'Nublado',ic:'⛅',pm:1.0,mm:1.0,sk:0},
+  {n:'Chuvoso',ic:'🌧️',pm:1.3,mm:0.95,sk:0.04},
+  {n:'Tempestade',ic:'⛈️',pm:0.5,mm:0.8,sk:0.09},
+  {n:'Seca',ic:'🏜️',pm:0.2,mm:0.75,sk:0.02}
+];
+const PHASES=[
+  {k:'bezerro',l:'Bezerro',mn:0,mx:90,chip:'cpu',pm:0.4},
+  {k:'garrote',l:'Garrote',mn:91,mx:270,chip:'cb',pm:0.7},
+  {k:'recria',l:'Recria',mn:271,mx:450,chip:'cw',pm:0.85},
+  {k:'engorda',l:'Engorda',mn:451,mx:600,chip:'ct',pm:1.1},
+  {k:'adulto',l:'Adulto',mn:601,mx:9999,chip:'cok',pm:1.0}
+];
+const BR={
+  nelore:{n:'Nelore',sx:'F',milk:6,bp:180,mp:500,gd:0.75,res:0.9,fert:0.85,cost:800,desc:'Rústica e resistente ao calor.',hr:1.3},
+  neloreM:{n:'Nelore Macho',sx:'M',milk:0,bp:200,mp:560,gd:0.95,res:0.9,cost:900,desc:'Excelente para corte e engorda.',hr:1.3},
+  angus:{n:'Angus',sx:'M',milk:0,bp:220,mp:640,gd:1.15,res:0.7,cost:1600,desc:'Carne premium. Melhor ganho.',hr:0.7},
+  holandesa:{n:'Holandesa',sx:'F',milk:20,bp:150,mp:460,gd:0.5,res:0.6,fert:0.8,cost:2200,desc:'Maior produção de leite.',hr:0.6},
+  girolando:{n:'Girolando',sx:'F',milk:13,bp:170,mp:490,gd:0.65,res:0.85,fert:0.88,cost:1400,desc:'Leiteiro adaptado ao Brasil.',hr:1.1},
+  senepol:{n:'Senepol',sx:'M',milk:0,bp:210,mp:580,gd:1.0,res:0.88,cost:1300,desc:'Resistente ao calor. Dócil.',hr:1.4},
+  touro:{n:'Touro Nelore',sx:'T',milk:0,bp:350,mp:720,gd:0.3,res:0.95,cost:4000,desc:'Reprodutor. Cobre 30 fêmeas.',hr:1.3},
+  touroBraford:{n:'Touro Braford',sx:'T',milk:0,bp:380,mp:800,gd:0.25,res:0.9,cost:6500,desc:'Genética superior.',hr:1.1},
+};
+const BUILDS={
+  curral:{n:'Curral básico',ic:'🪵',cost:2000,eff:'Permite manejos sanitários.'},
+  brete:{n:'Brete e tronco',ic:'🔩',cost:3500,eff:'+20% eficiência veterinária.'},
+  estabulo:{n:'Estábulo',ic:'🏚️',cost:5000,eff:'Reduz estresse invernal.'},
+  salaOrdenha:{n:'Sala de ordenha',ic:'🥛',cost:9000,eff:'+40% produção de leite.'},
+  tanque:{n:'Tanque resfriamento',ic:'🧊',cost:7000,eff:'+R$0,60/litro no leite.'},
+  silo:{n:'Silo de silagem',ic:'🏗️',cost:12000,eff:'Estoque de silagem 15t.'},
+  confinamento:{n:'Confinamento',ic:'🏭',cost:22000,eff:'+60% ganho de peso engorda.'},
+  farmVet:{n:'Farmácia veterinária',ic:'💊',cost:4500,eff:'-30% custo de tratamentos.'},
+  quarentena:{n:'Área de quarentena',ic:'🚧',cost:3000,eff:'Evita propagação de doenças.'},
+  energiaSolar:{n:'Energia solar',ic:'⚡',cost:18000,eff:'-R$500/mês em energia.'},
+  laboratorio:{n:'Laboratório genético',ic:'🔬',cost:28000,eff:'Permite IA e TE avançada.'},
+  frigorifico:{n:'Frigorífico parceiro',ic:'🥩',cost:5000,eff:'+20% no preço do boi.'},
+  laticinioP:{n:'Laticínio parceiro',ic:'🧴',cost:4000,eff:'+15% no preço do leite.'},
+};
+const MACH={
+  trator:{n:'Trator 75cv',cost:85000,mnt:500,fuel:30,desc:'Roçagem, adubação e plantio.',sym:'trator'},
+  caminhao:{n:'Caminhão boiadeiro',cost:130000,mnt:900,fuel:0,desc:'Transporte próprio sem frete.',sym:'caminhao'},
+  ordenhadeira:{n:'Ordenhadeira mecânica',cost:18000,mnt:250,fuel:0,desc:'+25% leite por ordenha.',sym:'ord'},
+  rocadeira:{n:'Roçadeira',cost:9000,mnt:150,fuel:15,desc:'Manejo eficiente do pasto.',sym:'roc'},
+  distribuidor:{n:'Distribuidor de adubo',cost:14000,mnt:200,fuel:10,desc:'+30% crescimento pasto.',sym:'dist'},
+  drone:{n:'Drone agro',cost:25000,mnt:300,fuel:5,desc:'Monitoramento e pulverização.',sym:'drone'},
+};
+const STAFF={
+  peao:{n:'Peão',ic:'👨‍🌾',sal:1800,desc:'Cuidados gerais do rebanho.',sym:'worker'},
+  ordenhador:{n:'Ordenhador',ic:'🧑‍🔬',sal:2200,desc:'+15% produção leiteira.',sym:'worker'},
+  veterinario:{n:'Veterinário',ic:'👨‍⚕️',sal:5500,desc:'Reduz doenças 50%. Trata auto.',sym:'vet'},
+  inseminador:{n:'Inseminador',ic:'🧬',sal:3800,desc:'Realiza IA. +20% fertilidade.',sym:'worker'},
+  gerente:{n:'Gerente',ic:'👔',sal:5000,desc:'+20% eficiência geral.',sym:'worker'},
+  tratorista:{n:'Tratorista',ic:'🚜',sal:3000,desc:'Opera máquinas. +30% efic.',sym:'worker'},
+  agronomo:{n:'Agrônomo',ic:'🌱',sal:4500,desc:'+40% crescimento do pasto.',sym:'worker'},
+};
+const INSUMOS={
+  vacina:{n:'Vacina aftosa',ic:'💉',unit:'dose',p:8,desc:'Vacinação obrigatória 2x/ano.'},
+  vermifugo:{n:'Vermífugo',ic:'💊',unit:'dose',p:12,desc:'Controle de parasitas.'},
+  antibiotico:{n:'Antibiótico',ic:'🔬',unit:'dose',p:35,desc:'Tratamento de infecções.'},
+  carrapaticida:{n:'Carrapaticida',ic:'🐛',unit:'L',p:45,desc:'Controle de carrapatos.'},
+  hormonio:{n:'Hormônio IA',ic:'🧬',unit:'dose',p:90,desc:'Para inseminação artificial.'},
+  salMineral:{n:'Sal mineral',ic:'🧂',unit:'kg',p:4,desc:'Suplemento mineral essencial.'},
+};
+const RACOES={
+  racaoBasica:{n:'Ração básica',ic:'🌽',unit:'kg',p:1.3,pd:3,desc:'Suplemento diário.'},
+  racaoEngorda:{n:'Ração engorda',ic:'🌾',unit:'kg',p:2.2,pd:5,desc:'+80% ganho na engorda.'},
+  silagem:{n:'Silagem',ic:'🌿',unit:'kg',p:0.45,pd:8,desc:'Volumoso essencial na seca.'},
+  feno:{n:'Feno',ic:'🌾',unit:'kg',p:0.9,pd:4,desc:'Alternativa no inverno.'},
+  proteico:{n:'Proteinado',ic:'⚗️',unit:'kg',p:5.5,pd:1,desc:'Alta energia para recria.'},
+};
+const JORNAL=[
+  {t:'Alta no boi gordo',d:'Exportações impulsionam. Boi com ágio de 12%.',e:'boi+12',dur:5},
+  {t:'Seca prolonga­da',d:'Estiagem reduz pasto. Ração mais cara.',e:'racao+20',dur:7},
+  {t:'Alerta aftosa',d:'Alerta sanitário na região. Fiscalização reforçada.',e:'sick+30',dur:10},
+  {t:'Crédito rural ampliado',d:'Governo anuncia juros menores ao agro.',e:'loan-15',dur:30},
+  {t:'Demanda chinesa',d:'China aumenta importações. Frigoríficos pagam prêmio.',e:'boi+18',dur:8},
+  {t:'Safra recorde de milho',d:'Abundância reduz custo da ração 15%.',e:'racao-15',dur:14},
+  {t:'Contrato de exportação',d:'Laticínio fecha acordo. Leite deve subir.',e:'leite+10',dur:10},
+  {t:'Chuvas acima da média',d:'Pastagens se recuperam rápido.',e:'pasto+20',dur:7},
+];
+const MISSIONS=[
+  {id:'m1',n:'Primeiros passos',d:'Compre seu primeiro animal',goal:'cows',tgt:1,rew:500,xp:100},
+  {id:'m2',n:'Pequeno produtor',d:'Tenha 10 animais',goal:'cows',tgt:10,rew:2000,xp:300},
+  {id:'m3',n:'Produtor leiteiro',d:'Venda 200 litros de leite',goal:'milkSold',tgt:200,rew:1500,xp:250},
+  {id:'m4',n:'Primeiro curral',d:'Construa o curral básico',goal:'build',tgt:'curral',rew:1000,xp:150},
+  {id:'m5',n:'Vacinação em dia',d:'Vaccine todos os animais',goal:'allVax',tgt:1,rew:800,xp:120},
+  {id:'m6',n:'Rebanho médio',d:'Tenha 30 animais',goal:'cows',tgt:30,rew:5000,xp:500},
+  {id:'m7',n:'Fazenda estruturada',d:'Construa 5 benfeitorias',goal:'builds',tgt:5,rew:8000,xp:600},
+  {id:'m8',n:'Mil litros',d:'Venda 1000 litros de leite',goal:'milkSold',tgt:1000,rew:12000,xp:1000},
+  {id:'m9',n:'Grande produtor',d:'Tenha 60 animais',goal:'cows',tgt:60,rew:20000,xp:2000},
+  {id:'m10',n:'Confinador',d:'Construa o confinamento',goal:'build',tgt:'confinamento',rew:15000,xp:1500},
+  {id:'m11',n:'Genética de elite',d:'Animal com genética 90+',goal:'gen90',tgt:1,rew:10000,xp:1200},
+  {id:'m12',n:'Fazendeiro rico',d:'Acumule R$100k em caixa',goal:'money',tgt:100000,rew:25000,xp:3000},
+];
+const RAND_EVENTS=[
+  {n:'Seca repentina',d:'Piquetes perderam 30% do pasto.',fn:G=>{G.pqs.forEach(p=>p.h=Math.max(10,p.h-30));}},
+  {n:'Chuva ótima',d:'Piquetes ganharam 25% de altura.',fn:G=>{G.pqs.forEach(p=>p.h=Math.min(100,p.h+25));}},
+  {n:'Surto de carrapatos',d:'Rebanho afetado. -10% saúde.',fn:G=>{G.cows.forEach(c=>c.hp=Math.max(30,c.hp-10));}},
+  {n:'Visita técnica',d:'Agrônomo melhora fertilidade dos piquetes.',fn:G=>{G.pqs.forEach(p=>p.fert=Math.min(100,p.fert+15));}},
+  {n:'Bezerro especial',d:'Nasceu animal com genética excepcional!',fn:G=>{if(G.cows.length){G.cows[0].gen=97;}}},
+  {n:'Furto de ração',d:'Perdeu 50kg de ração básica.',fn:G=>{G.inv.racaoBasica=Math.max(0,(G.inv.racaoBasica||0)-50);}},
+  {n:'Doação cooperativa',d:'Recebeu R$1.500 em suprimentos.',fn:G=>{earn(1500,'Cooperativa');}},
+];
+
+// ========== MARKET ==========
+const MKT={
+  boiGordo:{p:210,base:210,l:'Boi gordo',u:'arroba'},
+  bezerro:{p:1900,base:1900,l:'Bezerro',u:'cab'},
+  leite:{p:2.9,base:2.9,l:'Leite',u:'L'},
+  matriz:{p:4800,base:4800,l:'Vaca matriz',u:'cab'},
+  touro:{p:13000,base:13000,l:'Touro reprodutor',u:'cab'},
+};
+let mktMod={boi:1,leite:1,racao:1};
+
+function updateMkt(){
+  Object.keys(MKT).forEach(k=>{const m=MKT[k];m.p=Math.max(m.base*.55,Math.min(m.base*1.6,m.p*(1+(Math.random()-.5)*.04)));});
+}
+function leiteP(){let p=MKT.leite.p*mktMod.leite;if(isBuilt('tanque'))p+=.6;if(isBuilt('laticinioP'))p*=1.15;return p;}
+function boiP(){return MKT.boiGordo.p*mktMod.boi*(isBuilt('frigorifico')?1.2:1);}
+
+// ========== STATE ==========
+let G={
+  money:5000,day:1,season:2,wx:1,
+  cows:[],maxCows:30,cowId:0,
+  pqs:[],selPq:null,selCow:null,
+  milkStock:0,milkSold:0,
+  builds:{},mach:{},staff:[],
+  inv:{},
+  contracts:[],loans:[],
+  ins:{active:false,premium:300,cov:.7},
+  fin:{inc:0,exp:0,hist:[]},
+  mday:1,
+  missions:[],
+  stats:{dead:0,born:0,sold:0,earn:0,spent:0},
+  rep:10,level:1,xp:0,
+  vetCal:{vac:30,verm:90,car:60},
+  log:[],
+  auction:{active:false,lots:[],day:0},
+  jEv:null,jDays:0,
+};
+
+// ========== HELPERS ==========
+function isBuilt(k){return G.builds[k]&&G.builds[k].built;}
+function hasMach(k){return G.mach[k]&&G.mach[k].owned;}
+function hasStaff(t){return G.staff.some(s=>s.type===t);}
+function getPhase(age){for(const p of PHASES)if(age>=p.mn&&age<=p.mx)return p;return PHASES[4];}
+function cowIconKey(c){
+  if(getPhase(c.age).k==='bezerro')return'bezerro';
+  if(c.breed==='touro'||c.breed==='touroBraford')return'touro';
+  if(['neloreM','angus','senepol'].includes(c.breed))return'macho';
+  return'femea';
+}
+function earn(v,d){G.money+=v;G.fin.inc+=v;G.stats.earn+=v;}
+function spend(v,d){G.money=Math.max(0,G.money-v);G.fin.exp+=v;G.stats.spent+=v;}
+function addLog(m,t=''){G.log.unshift({m,t});if(G.log.length>120)G.log.pop();}
+function toast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='show t'+t;clearTimeout(el._t);el._t=setTimeout(()=>el.className='',3500);}
+function fmt(n){if(n>=1000000)return'R$'+(n/1000000).toFixed(1)+'M';if(n>=1000)return'R$'+(n/1000).toFixed(1)+'k';return'R$'+Math.round(n);}
+
+function sellVal(c){
+  const b=BR[c.breed],ph=getPhase(c.age);
+  const ar=Math.max(1,c.peso/15);
+  let v=ar*boiP()*ph.pm*(c.hp/100)*(.75+c.gen/250);
+  if(b.milk>0&&ph.k==='adulto')v=Math.max(v,MKT.matriz.p*(c.hp/100));
+  return Math.round(v);
+}
+function canMilk(c){return BR[c.breed].milk>0&&getPhase(c.age).k==='adulto'&&!c.sick&&!c.milkedToday;}
+function milkAmt(c){
+  let l=BR[c.breed].milk;
+  l*=SEASONS[G.season].mm*WEATHERS[G.wx].mm;
+  if(!c.fedToday)l*=.5;
+  if(isBuilt('salaOrdenha'))l*=1.4;
+  if(hasMach('ordenhadeira'))l*=1.25;
+  if(hasStaff('ordenhador'))l*=1.15;
+  return Math.max(0,Math.round(l));
+}
+function wgAmt(c){
+  const b=BR[c.breed];let g=b.gd;
+  g*=SEASONS[G.season].wm*.6+.4;
+  if(!c.fedToday)g*=.2;if(c.sick)g=0;
+  if(getPhase(c.age).k==='engorda'&&c.engRation>0)g*=isBuilt('confinamento')?2.8:1.8;
+  if(hasStaff('gerente'))g*=1.2;
+  return Math.max(0,Math.min(g,b.mp-c.peso));
+}
+function pastBonus(){
+  const a=G.pqs.filter(p=>!p.rest);if(!a.length)return 0;
+  return a.reduce((s,p)=>s+p.h,0)/a.length*.15;
+}
+function makeCow(bk,age){
+  const b=BR[bk],a=age||0;
+  return{id:G.cowId++,breed:bk,name:b.n+'#'+(G.cowId),age:a,hp:100,hunger:70,
+    peso:b.bp+(a*b.gd*.4),milkedToday:false,fedToday:false,sick:false,sickDays:0,disease:'',
+    vaccinated:false,pregnant:false,pregDays:0,pregnancies:0,engRation:0,
+    gen:50+(Math.random()*25|0),daysOwned:0};
+}
+function makePq(){return{id:G.pqs.length,n:'Piquete '+(G.pqs.length+1),h:50+(Math.random()*40|0),rest:false,grass:'Brachiaria',gr:1+Math.random()*.5,fert:55+(Math.random()*35|0)};}
+
+// ========== ACTIONS ==========
+function actAll(type){
+  if(type==='alimentar'){
+    const un=G.cows.filter(c=>!c.fedToday&&c.hp>0);if(!un.length){toast('Todos já alimentados.','warn');return;}
+    const cost=Math.round(un.length*(isBuilt('silo')?.8:1.2)*10);
+    if(G.money<cost){toast('Precisa '+fmt(cost),'err');return;}
+    spend(cost,'Alimentação');un.forEach(c=>{c.fedToday=true;c.hunger=Math.min(100,c.hunger+45);});
+    addLog('🌾 Alimentou '+un.length+' animais. '+fmt(cost)+'.','good');renderCattle();renderHUD();
+  }
+  if(type==='ordenhar'){
+    const vc=G.cows.filter(c=>canMilk(c));
+    const ja=G.cows.filter(c=>BR[c.breed].milk>0&&getPhase(c.age).k==='adulto'&&c.milkedToday).length;
+    if(!vc.length){toast(ja?ja+' já ordenhadas hoje (1x/dia).':'Nenhuma vaca adulta.','warn');return;}
+    let tot=0;vc.forEach(c=>{const l=milkAmt(c);c.milkedToday=true;G.milkStock+=l;tot+=l;});
+    addLog('🥛 Ordenha: +'+tot+'L'+(ja?' ('+ja+' já ordenhadas)':'')+'.','good');
+    toast('+'+tot+'L coletados!','ok');checkMissions();renderHUD();renderCattle();
+  }
+  if(type==='vender-leite'){
+    if(!G.milkStock){toast('Estoque vazio.','warn');return;}
+    const p=leiteP(),v=Math.round(G.milkStock*p);
+    earn(v,'Venda leite');G.milkSold+=G.milkStock;
+    addLog('💰 Vendeu '+G.milkStock+'L por '+fmt(v)+' (R$'+p.toFixed(2)+'/L).','good');
+    toast(fmt(v)+' recebidos!','ok');G.milkStock=0;checkMissions();renderHUD();
+  }
+}
+function coberturaTouro(){
+  const t=G.cows.filter(c=>c.breed==='touro'||c.breed==='touroBraford');
+  if(!t.length){toast('Sem touro no rebanho.','warn');return;}
+  const fs=G.cows.filter(c=>BR[c.breed].sx==='F'&&getPhase(c.age).k==='adulto'&&!c.pregnant&&!c.sick);
+  if(!fs.length){toast('Sem fêmeas adultas disponíveis.','warn');return;}
+  let n=0;fs.forEach(f=>{if(Math.random()<(BR[f.breed].fert||.8)){f.pregnant=true;f.pregDays=0;n++;}});
+  addLog('🐃 Touro cobriu: '+n+'/'+fs.length+' prenhas.','good');toast(n+' fêmeas prenhas!','ok');
+  renderCattle();renderReprod();
+}
+
+// ========== NEXT DAY ==========
+function nextDay(){
+  G.day++;G.mday++;
+  G.season=Math.floor(G.day/25)%4;
+  G.wx=Math.random()<.15?4:Math.floor(Math.random()*4);
+  const s=SEASONS[G.season],w=WEATHERS[G.wx];
+  const diseases=['Mastite','Febre aftosa','Pneumonia','Verminose','Tristeza parasitária','Brucelose'];
+  const hasVet=hasStaff('veterinario');
+  const sickMult=s.sm*(hasVet?.35:1)*(isBuilt('quarentena')?.65:1);
+  const newCalves=[];
+
+  if(G.jEv){G.jDays--;if(G.jDays<=0){G.jEv=null;mktMod={boi:1,leite:1,racao:1};addLog('📰 Efeito de notícia encerrou.','info');}}
+  if(!G.jEv&&Math.random()<.12){
+    G.jEv=JORNAL[Math.floor(Math.random()*JORNAL.length)];G.jDays=G.jEv.dur;
+    const e=G.jEv.e;
+    if(e.includes('boi+'))mktMod.boi=1+parseInt(e.split('+')[1])/100;
+    if(e.includes('leite+'))mktMod.leite=1+parseInt(e.split('+')[1])/100;
+    if(e.includes('racao+'))mktMod.racao=1+parseInt(e.split('+')[1])/100;
+    if(e.includes('racao-'))mktMod.racao=1-parseInt(e.split('-')[1])/100;
+    addLog('📰 JORNAL: '+G.jEv.t,'gold');
+    const eb=document.getElementById('evbanner');
+    eb.textContent='📰 '+G.jEv.t+' — '+G.jEv.d;eb.classList.add('show');
+    setTimeout(()=>eb.classList.remove('show'),9000);
+  }
+  if(Math.random()<.07){
+    const ev=RAND_EVENTS[Math.floor(Math.random()*RAND_EVENTS.length)];
+    ev.fn(G);addLog('⚡ EVENTO: '+ev.n+' — '+ev.d,'gold');toast('Evento: '+ev.n,'warn');
+  }
+
+  G.cows.forEach(c=>{
+    c.daysOwned++;c.age++;c.fedToday=false;c.milkedToday=false;
+    c.hunger=Math.max(0,c.hunger-28);
+    if(c.hunger<20)c.hp=Math.max(0,c.hp-12);
+    c.peso=Math.min(BR[c.breed].mp,c.peso+wgAmt(c));
+    if(c.engRation>0)c.engRation--;
+    const sk=.05*sickMult+(w.sk||0);
+    if(!c.sick&&c.hp>30&&Math.random()<sk){
+      c.sick=true;c.disease=diseases[Math.floor(Math.random()*diseases.length)];c.sickDays=0;
+      addLog('🤒 ALERTA: '+c.name+' com '+c.disease+'!','alert');
+      if(hasVet&&(G.inv.antibiotico||0)>=1){G.inv.antibiotico--;c.sick=false;c.sickDays=0;c.hp=Math.min(100,c.hp+20);addLog('💉 Vet. tratou '+c.name+'.','good');}
+      else toast(c.name+' doente!','err');
+    }
+    if(c.sick){c.sickDays++;c.hp=Math.max(0,c.hp-8);}
+    if(c.pregnant){c.pregDays++;
+      if(c.pregDays>=280){
+        c.pregnant=false;c.pregDays=0;c.pregnancies++;
+        if(G.cows.length+newCalves.length<G.maxCows){
+          const bk=Math.random()>.5?'neloreM':'nelore';
+          const cf=makeCow(bk,0);cf.gen=Math.round((c.gen+(55+Math.random()*35))/2);
+          newCalves.push(cf);G.stats.born++;
+          addLog('🐣 Bezerro nasceu! Genética: '+cf.gen+'.','good');toast('Nasceu um bezerro!','ok');
+        }
+      }
+    }
+    c.hunger=Math.min(100,c.hunger+pastBonus());
+  });
+
+  newCalves.forEach(cf=>G.cows.push(cf));
+  if(G.ins.active){
+    const dead=G.cows.filter(c=>c.hp<=0);
+    if(dead.length){const cov=Math.round(dead.length*2000*G.ins.cov);earn(cov,'Seguro');addLog('🛡️ Seguro cobriu '+dead.length+' baixa(s): '+fmt(cov)+'.','good');}
+  }
+  const dead=G.cows.filter(c=>c.hp<=0);dead.forEach(c=>addLog('💀 '+c.name+' morreu.','alert'));
+  G.stats.dead+=dead.length;G.cows=G.cows.filter(c=>c.hp>0);
+
+  const agr=hasStaff('agronomo');
+  G.pqs.forEach(p=>{if(!p.rest){const gr=p.gr*s.pm*(w.pm||1)*(agr?1.4:1)*.6;p.h=Math.min(100,p.h+gr);}});
+
+  const salCost=G.staff.reduce((s,e)=>s+e.salary/30,0);
+  if(salCost>0)spend(Math.round(salCost),'Folha salarial');
+  const fuelCost=Object.values(G.mach).filter(m=>m.owned).reduce((s,m)=>s+m.fuel,0);
+  if(fuelCost>0)spend(fuelCost,'Combustível');
+  if(isBuilt('energiaSolar'))earn(Math.round(500/30),'Economia solar');
+  if(G.ins.active)spend(Math.round(G.ins.premium/30),'Seguro rural');
+  G.loans.forEach(l=>{if(l.rem>0){const p=Math.min(l.rem,l.mo);spend(p,'Parcela');l.rem-=p;if(l.rem<=0)addLog('✅ Financiamento "'+l.n+'" quitado!','good');}});
+
+  G.vetCal.vac--;G.vetCal.verm--;G.vetCal.car--;
+  if(G.vetCal.vac<=0){addLog('📅 Época de vacinação!','info');G.vetCal.vac=180;}
+  if(G.vetCal.verm<=0){addLog('📅 Época de vermifugação!','info');G.vetCal.verm=90;}
+
+  if(G.mday>=30){
+    G.fin.hist.push({m:Math.floor(G.day/30),inc:G.fin.inc,exp:G.fin.exp,profit:G.fin.inc-G.fin.exp});
+    if(G.fin.hist.length>12)G.fin.hist.shift();
+    G.fin.inc=0;G.fin.exp=0;G.mday=0;
+    updateMkt();genContracts();if(!G.auction.active)genAuction();
+    addLog('📆 Fim do mês. Relatório atualizado.','info');
+  }
+  updateMkt();checkMissions();updateBadges();
+  addLog('📅 Dia '+G.day+' — '+s.n+' · '+w.n+'.','info');
+  renderAll();
+}
+
+// ========== SELL / ACTIONS ==========
+function sellCow(idx){const c=G.cows[idx];if(!c)return;const v=sellVal(c);earn(v,'Venda');G.stats.sold++;addLog('💰 Vendeu '+c.name+' ('+c.peso.toFixed(0)+'kg) por '+fmt(v)+'.','good');toast(fmt(v),'ok');G.cows.splice(idx,1);G.selCow=null;closeSheet();renderAll();}
+function vacinarAnimal(idx){const c=G.cows[idx];if(!c)return;if(!(G.inv.vacina>=1)){toast('Sem vacinas.','err');return;}G.inv.vacina--;c.vaccinated=true;addLog(c.name+' vacinado.','good');toast('Vacinado!','ok');checkMissions();renderCattle();closeSheet();}
+function tratarAnimal(idx,med){
+  const c=G.cows[idx];if(!c||!c.sick)return;
+  const disc=isBuilt('farmVet')?.7:1;
+  if(med==='ab'){if(!(G.inv.antibiotico>=1)){toast('Sem antibiótico.','err');return;}G.inv.antibiotico--;c.sick=false;c.sickDays=0;c.hp=Math.min(100,c.hp+30);addLog(c.name+' curado com antibiótico.','good');toast('Curado!','ok');}
+  else{const cost=Math.round(200*disc);if(G.money<cost){toast('Precisa '+fmt(cost),'err');return;}spend(cost,'Vet');c.sick=false;c.sickDays=0;c.hp=Math.min(100,c.hp+25);addLog(c.name+' tratado. '+fmt(cost)+'.','good');toast('Curado!','ok');}
+  renderVet();renderCattle();closeSheet();
+}
+function inseminarAnimal(idx){
+  const c=G.cows[idx];if(!c)return;
+  if(getPhase(c.age).k!=='adulto'){toast('Só vacas adultas.','warn');return;}
+  if(!hasStaff('inseminador')&&!isBuilt('laboratorio')){toast('Precisa inseminador ou laboratório.','warn');return;}
+  if(!(G.inv.hormonio>=1)){toast('Sem hormônio IA.','err');return;}
+  G.inv.hormonio--;c.pregnant=true;c.pregDays=0;addLog(c.name+' inseminada.','good');toast(c.name+' prenha!','ok');renderCattle();closeSheet();
+}
+function feedEngorda(idx){const c=G.cows[idx];if((G.inv.racaoEngorda||0)<5){toast('Sem ração engorda.','err');return;}G.inv.racaoEngorda-=5;c.engRation=7;toast('Dieta engorda 7 dias!','ok');addLog(c.name+' em dieta engorda.','good');openSheet(idx);}
+function sellOnAuction(idx){const c=G.cows[idx];if(!c)return;const v=Math.round(sellVal(c)*1.15);earn(v,'Leilão');G.cows.splice(idx,1);G.selCow=null;addLog('🏆 Vendeu '+c.name+' no leilão por '+fmt(v)+' (+15%)!','gold');toast(fmt(v)+' no leilão!','gold');closeSheet();renderCattle();renderHUD();}
+function vetGeral(){if(G.money<300){toast('Precisa R$300.','err');return;}spend(300,'Vet geral');let n=0;G.cows.forEach(c=>{if(c.sick){c.sick=false;c.sickDays=0;c.hp=Math.min(100,c.hp+30);n++;}});addLog('👨‍⚕️ Veterinário tratou '+n+' animais. R$300.','good');toast(n+' curados!','ok');renderVet();renderCattle();}
+function vacinarTodos(){if((G.inv.vacina||0)<G.cows.length){toast('Sem vacinas suficientes.','err');return;}G.inv.vacina-=G.cows.length;G.cows.forEach(c=>c.vaccinated=true);G.vetCal.vac=180;addLog('💉 Vacinação em massa: '+G.cows.length+' animais.','good');toast('Todos vacinados!','ok');checkMissions();renderVet();renderCattle();}
+function vermifugarTodos(){if((G.inv.vermifugo||0)<G.cows.length){toast('Sem vermífugos.','err');return;}G.inv.vermifugo-=G.cows.length;G.vetCal.verm=90;addLog('💊 Vermifugação em massa.','good');toast('Todos vermifugados!','ok');renderVet();}
+
+// ========== BUILDS / MACH / STAFF ==========
+function buildIt(k){const b=G.builds[k];if(b.built){toast('Já construído.','warn');return;}if(G.money<b.cost){toast('Precisa '+fmt(b.cost),'err');return;}spend(b.cost,'Construção: '+b.n);b.built=true;addLog('🏗️ '+b.n+' construído!','good');toast(b.n+' pronto!','ok');checkMissions();renderFazenda();}
+function buyMach(k){const m=G.mach[k];if(m.owned){toast('Já possui!','warn');return;}if(G.money<m.cost){toast('Capital insuficiente.','err');return;}spend(m.cost,'Máquina: '+m.n);m.owned=true;addLog('🚜 Comprou '+m.n,'good');toast(m.n+' adquirido!','ok');renderFazenda();}
+function hireStaff(t){const tp=STAFF[t];if(G.money<tp.sal*2){toast('Precisa '+fmt(tp.sal*2),'err');return;}G.staff.push({type:t,name:tp.n,salary:tp.sal,sat:90,exp:1});addLog('👷 Contratou: '+tp.n+'.','good');toast(tp.n+' contratado!','ok');renderFazenda();}
+function fireStaff(i){G.staff.splice(i,1);toast('Dispensado.','warn');renderFazenda();}
+function buyCow(bk){const b=BR[bk];if(G.money<b.cost){toast('Precisa '+fmt(b.cost),'err');return;}if(G.cows.length>=G.maxCows){toast('Pasto cheio!','warn');return;}spend(b.cost,'Compra: '+b.n);G.cows.push(makeCow(bk,320+(Math.random()*250|0)));addLog('🐄 Comprou '+b.n+' por '+fmt(b.cost)+'.','good');toast(b.n+' adicionado!','ok');checkMissions();renderAll();}
+function buyInsumo(k,qty){const i=INSUMOS[k]||RACOES[k];const cost=i.p*qty;if(G.money<cost){toast('Sem capital.','err');return;}spend(cost,'Insumo: '+i.n);G.inv[k]=(G.inv[k]||0)+qty;addLog('🛒 '+qty+' '+i.unit+' de '+i.n+'.','good');toast(i.n+' comprado!','ok');renderNutricao();renderHUD();}
+function takeLoan(amt,n){if(G.loans.filter(l=>l.rem>0).length>=2){toast('Máx. 2 financiamentos.','warn');return;}const mo=Math.round(amt/24*1.15);earn(amt,'Financiamento');G.loans.push({n,amount:amt,mo,rem:amt});addLog('🏦 Financiamento: '+fmt(amt)+'.','good');toast(fmt(amt)+' creditados!','ok');renderFinancas();renderHUD();}
+function toggleIns(){G.ins.active=!G.ins.active;addLog((G.ins.active?'🛡️ Seguro ativado.':'🛡️ Seguro cancelado.'),'info');toast(G.ins.active?'Seguro ativo!':'Seguro cancelado.','ok');renderFinancas();}
+function activateContract(i){const c=G.contracts[i];c.active=true;addLog('📋 Contrato: '+c.n,'info');toast('Contrato ativado!','ok');renderMercado();}
+
+// ========== PASTURE ==========
+function addPq(){if(G.money<500){toast('R$500 necessários.','err');return;}spend(500,'Novo piquete');G.pqs.push(makePq());addLog('🌿 Novo piquete.','good');renderPasture();}
+function adubarPq(i){if(G.money<200){toast('R$200.','err');return;}spend(200,'Adubação');G.pqs[i].fert=Math.min(100,G.pqs[i].fert+20);G.pqs[i].gr=Math.min(3,G.pqs[i].gr+.2);toast('Adubado!','ok');renderPasture();}
+function irrigarPq(i){if(G.money<150){toast('R$150.','err');return;}spend(150,'Irrigação');G.pqs[i].h=Math.min(100,G.pqs[i].h+25);toast('Irrigado!','ok');renderPasture();}
+function rocarPq(i){if(G.money<100){toast('R$100.','err');return;}spend(100,'Roçada');G.pqs[i].h=Math.max(20,G.pqs[i].h-10);G.pqs[i].gr=Math.min(3,G.pqs[i].gr+.1);toast('Roçada!','ok');renderPasture();}
+
+// ========== AUCTION ==========
+function genAuction(){
+  G.auction.active=true;G.auction.day=G.day+5;
+  G.auction.lots=[
+    {id:0,n:'3 novilhos Nelore',breed:'neloreM',age:400,sb:2500,cb:2500,bids:[],last:'Fazenda Vizinha',mine:false},
+    {id:1,n:'Vaca Girolando prenha',breed:'girolando',age:700,sb:5500,cb:5500,bids:[],last:'Agro Silva',mine:false},
+    {id:2,n:'Touro Braford genética elite',breed:'touroBraford',age:900,sb:9000,cb:9000,bids:[],last:'Cooperativa',mine:false},
+  ];
+  G.auction.lots.forEach(l=>{for(let i=0;i<3;i++){l.bids.push({who:['Fazenda São João','Agro Silva','Ranch Cerrado'][i],v:l.sb+(i+1)*300});}l.cb=l.bids[l.bids.length-1].v;l.last=l.bids[l.bids.length-1].who;});
+  addLog('🏆 Leilão disponível! Encerra dia '+G.auction.day+'.','gold');
+}
+function bidLot(id){
+  const l=G.auction.lots[id];const v=l.cb+300;
+  if(G.money<v){toast('Capital insuficiente.','err');return;}
+  l.bids.push({who:'Você',v});l.cb=v;l.last='Você';l.mine=true;
+  if(Math.random()>.4){const av=v+400+(Math.random()*500|0);l.bids.push({who:['Fazenda São João','Agro Silva'][Math.random()>.5?0:1],v:av});l.cb=av;l.last=l.bids[l.bids.length-1].who;l.mine=false;toast('Contra-lance!','warn');}
+  else toast('Lance '+fmt(v)+' registrado!','ok');
+  renderLeilao();
+}
+function winLot(id){
+  const l=G.auction.lots[id];if(!l.mine)return;
+  if(G.money<l.cb){toast('Capital insuficiente.','err');return;}
+  spend(l.cb,'Leilão: '+l.n);const cf=makeCow(l.breed,l.age);G.cows.push(cf);
+  addLog('🏆 Venceu leilão: '+l.n+' por '+fmt(l.cb)+'!','gold');toast('Lote arrematado!','gold');l.won=true;renderLeilao();renderCattle();
+}
+function genContracts(){
+  if(G.contracts.filter(c=>!c.active&&!c.done).length>=3)return;
+  const types=[{n:'Laticínio regional',type:'leite',qty:300,bonus:.3,days:20},{n:'Frigorífico JBS',type:'boi',qty:4,bonus:300,days:30},{n:'Exportação de matrizes',type:'matriz',qty:2,bonus:1800,days:45},{n:'Cooperativa local',type:'leite',qty:150,bonus:.15,days:14}];
+  const t=types[Math.floor(Math.random()*types.length)];
+  G.contracts.push({...t,id:G.contracts.length,active:false,done:false,deadline:G.day+t.days});
+}
+
+// ========== MISSIONS ==========
+function checkMissions(){
+  G.missions.forEach(m=>{if(m.done)return;let p=0;
+    if(m.goal==='cows')p=G.cows.length;
+    if(m.goal==='milkSold')p=G.milkSold;
+    if(m.goal==='build')p=isBuilt(m.tgt)?1:0;
+    if(m.goal==='builds')p=Object.values(G.builds).filter(b=>b.built).length;
+    if(m.goal==='allVax')p=G.cows.length>0&&G.cows.every(c=>c.vaccinated)?1:0;
+    if(m.goal==='gen90')p=G.cows.some(c=>c.gen>=90)?1:0;
+    if(m.goal==='money')p=G.money;
+    m.prog=p;
+    if(p>=m.tgt&&!m.done){m.done=true;earn(m.rew,'Missão: '+m.n);G.xp+=m.xp;checkLevel();addLog('🎯 Missão: '+m.n+'! +'+fmt(m.rew)+' +'+m.xp+'xp','gold');toast('Missão: '+m.n+'!','gold');}
+  });
+}
+function checkLevel(){const th=[0,200,500,1000,2000,4000,8000,15000,25000,40000,60000];let lv=1;for(let i=1;i<th.length;i++)if(G.xp>=th[i])lv=i+1;if(lv>G.level){G.level=lv;addLog('⭐ Nível '+lv+'!','gold');}}
+function updateBadges(){const n=G.cows.filter(c=>c.sick).length;document.querySelectorAll('.vet-n').forEach(el=>{el.textContent=n;el.style.display=n?'flex':'none';});}
+function joinFair(){if(G.cows.length<10){toast('Precisa 10 animais.','warn');return;}if(G.money<500){toast('Taxa R$500.','err');return;}spend(500,'Feira');G.rep=Math.min(100,G.rep+15);G.xp+=500;checkLevel();const p=2000+G.cows.length*50;earn(p,'Prêmio feira');addLog('🌾 Feira: reputação +15. Prêmio '+fmt(p)+'.','gold');toast('Feira! +'+fmt(p),'gold');renderMissoes();renderHUD();}
+function inseminarTodas(){
+  const fs=G.cows.filter(c=>BR[c.breed].sx==='F'&&getPhase(c.age).k==='adulto'&&!c.pregnant);
+  if(!hasStaff('inseminador')&&!isBuilt('laboratorio')){toast('Precisa inseminador ou laboratório.','warn');return;}
+  if((G.inv.hormonio||0)<fs.length){toast('Sem hormônios: precisa '+fs.length+'.','err');return;}
+  let n=0;fs.forEach(c=>{G.inv.hormonio--;c.pregnant=true;c.pregDays=0;n++;});
+  addLog('🧬 IA em massa: '+n+' fêmeas.','good');toast(n+' inseminadas!','ok');renderReprod();
+}
+
+// ========== RENDER HUD ==========
+function renderHUD(){
+  const sick=G.cows.filter(c=>c.sick).length;
+  document.getElementById('hud-scroll').innerHTML=
+    hc('💰',fmt(G.money),'Capital')+
+    hc('🐄',G.cows.length+'/'+G.maxCows,'Rebanho')+
+    hc('🥛',G.milkStock+'L','Leite')+
+    (sick?hc('🤒',sick,'Doentes','color:var(--rt)'):hc('✅','OK','Saúde','color:var(--gt)'))+
+    hc('⭐','Lv'+G.level,'Nível');
+  const s=SEASONS[G.season],w=WEATHERS[G.wx];
+  document.getElementById('wstrip').innerHTML=
+    `<span style="font-size:16px">${w.ic}</span><b>${w.n}</b>`+
+    `<span style="color:var(--text2)">${s.desc}</span>`+
+    `<span style="color:var(--text2);font-size:11px">Leite: R$${leiteP().toFixed(2)}/L</span>`+
+    `<span class="spill">${s.ic} ${s.n} · Dia ${G.day}</span>`;
+}
+function hc(ic,v,l,style){return`<div class="hc"><div class="hc-v" ${style?'style="'+style+'"':''}>${ic} ${v}</div><div class="hc-l">${l}</div></div>`;}
+
+// ========== RENDER CATTLE ==========
+function renderCattle(){
+  const g=document.getElementById('cvg');if(!g)return;
+  const pc={bezerro:0,garrote:0,recria:0,engorda:0,adulto:0};
+  G.cows.forEach(c=>pc[getPhase(c.age).k]++);
+  const pb=document.getElementById('phbar');
+  if(pb)pb.innerHTML=PHASES.map(p=>`<div class="phb" onclick="filterPhase('${p.k}')"><span class="phb-n">${pc[p.k]}</span><span class="phb-l">${p.l}</span></div>`).join('');
+  g.innerHTML='';
+  G.cows.forEach((c,i)=>{
+    const ph=getPhase(c.age);const slot=document.createElement('div');
+    let cls='cw-card'+(G.selCow===i?' sel':'')+(c.sick?' sick':'')+(c.pregnant?' preg':'');
+    slot.className=cls;
+    const hc2=c.hp>60?'#3d9e20':c.hp>30?'#c07818':'#c03030';
+    const fc=c.hunger>60?'#1a68c0':c.hunger>30?'#c07818':'#c03030';
+    let dots='';
+    if(canMilk(c))dots+=`<div class="cdot cdot-r" style="background:#1a68c0"></div>`;
+    if(c.milkedToday)dots+=`<div class="cdot cdot-r" style="background:#3d9e20"></div>`;
+    if(c.pregnant)dots+=`<div class="cdot cdot-l" style="background:#6840c0"></div>`;
+    if(c.sick)dots+=`<div class="cdot cdot-l" style="background:#c03030"></div>`;
+    const ick=cowIconKey(c);
+    let svgEl='';
+    if(ick==='bezerro')svgEl=`<svg width="48" height="38" viewBox="0 0 60 50"><use href="#svg-calf"/></svg>`;
+    else if(ick==='touro')svgEl=`<svg width="54" height="41" viewBox="0 0 80 60"><use href="#svg-bull"/></svg>`;
+    else if(ick==='macho')svgEl=`<svg width="54" height="41" viewBox="0 0 80 60"><use href="#svg-cow-m"/></svg>`;
+    else svgEl=`<svg width="54" height="41" viewBox="0 0 80 60"><use href="#svg-cow-f"/></svg>`;
+    slot.innerHTML=dots+
+      `<div class="cw-anim">${svgEl}</div>`+
+      `<div class="cw-name">${c.name}</div>`+
+      `<div class="cw-kg">${c.peso.toFixed(0)}kg</div>`+
+      `<div style="margin-top:2px"><span class="chip ${ph.chip}" style="font-size:8px">${ph.l}</span></div>`+
+      `<div class="bbar"><div class="bfill" style="width:${c.hp}%;background:${hc2}"></div></div>`+
+      `<div class="bbar"><div class="bfill" style="width:${c.hunger}%;background:${fc}"></div></div>`;
+    slot.onclick=()=>{G.selCow=i;openSheet(i);}
+    g.appendChild(slot);
+  });
+  updateBadges();
+}
+function filterPhase(k){}
+
+// ========== SHEET ==========
+function openSheet(idx){
+  const c=G.cows[idx];if(!c)return;
+  const ph=getPhase(c.age);const b=BR[c.breed];
+  const ick=cowIconKey(c);
+  let bigSvg='';
+  if(ick==='bezerro')bigSvg=`<svg width="80" height="60" viewBox="0 0 60 50"><use href="#svg-calf"/></svg>`;
+  else if(ick==='touro')bigSvg=`<svg width="90" height="68" viewBox="0 0 80 60"><use href="#svg-bull"/></svg>`;
+  else if(ick==='macho')bigSvg=`<svg width="90" height="68" viewBox="0 0 80 60"><use href="#svg-cow-m"/></svg>`;
+  else bigSvg=`<svg width="90" height="68" viewBox="0 0 80 60"><use href="#svg-cow-f"/></svg>`;
+  const lp=leiteP();
+  let btns=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">`;
+  if(canMilk(c))btns+=`<button class="bb bf" onclick="milkOne(${idx})">🥛 Ordenhar</button>`;
+  if(c.milkedToday)btns+=`<button disabled class="bf">✅ Já ordenhada</button>`;
+  if(!c.vaccinated)btns+=`<button class="ba bf" onclick="vacinarAnimal(${idx})">💉 Vacinar (${G.inv.vacina||0})</button>`;
+  if(c.sick){btns+=`<button class="br bf" onclick="tratarAnimal(${idx},'ab')">💊 Antibiótico (${G.inv.antibiotico||0})</button>`;btns+=`<button class="ba bf" onclick="tratarAnimal(${idx},'vet')">👨‍⚕️ Vet. R$140</button>`;}
+  if(ph.k==='engorda')btns+=`<button class="bt2 bf" onclick="feedEngorda(${idx})">🌽 Ração engorda</button>`;
+  if(b.sx==='F'&&ph.k==='adulto'&&!c.pregnant)btns+=`<button class="bu bf" onclick="inseminarAnimal(${idx})">🧬 Inseminar</button>`;
+  if(ph.k==='adulto'||ph.k==='engorda')btns+=`<button class="bg2 bf" onclick="sellOnAuction(${idx})">🏆 Leilão +15%</button>`;
+  btns+=`<button class="br bf" onclick="sellCow(${idx})" style="grid-column:span 2">💰 Vender — ${fmt(sellVal(c))}</button></div>`;
+  document.getElementById('dscont').innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;padding:10px;background:var(--bg3);border-radius:var(--rl)">
+      <div style="background:var(--bg4);border-radius:var(--r);padding:6px;display:flex;align-items:center;justify-content:center">${bigSvg}</div>
+      <div>
+        <div style="font-size:17px;font-weight:800;margin-bottom:5px">${c.name}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px"><span class="chip ${ph.chip}">${ph.l}</span><span class="chip cpu">Genética ${c.gen}</span>${c.sick?'<span class="chip ce">Doente: '+c.disease+'</span>':''}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:5px">${b.n} · ${c.age} dias · ${c.peso.toFixed(1)}kg</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 14px">
+      <div class="dr"><span class="drl">Saúde</span><span class="chip ${c.hp>60?'cok':c.hp>30?'cw':'ce'}">${c.hp}%</span></div>
+      <div class="dr"><span class="drl">Fome</span><span class="chip ${c.hunger>60?'cok':c.hunger>30?'cw':'ce'}">${c.hunger}%</span></div>
+      <div class="dr"><span class="drl">Vacinado</span><span class="chip ${c.vaccinated?'cok':'cw'}">${c.vaccinated?'Sim':'Não'}</span></div>
+      <div class="dr"><span class="drl">Status</span><span class="chip ${c.sick?'ce':'cok'}">${c.sick?c.disease:'Saudável'}</span></div>
+      ${b.milk>0?`<div class="dr"><span class="drl">Leite/dia</span><span>${ph.k==='adulto'?milkAmt(c)+'L — '+fmt(milkAmt(c)*lp):'fase '+ph.l}</span></div>`:''}
+      ${b.sx==='F'?`<div class="dr"><span class="drl">Gestação</span><span>${c.pregnant?c.pregDays+'/280d':'Vazia'}</span></div>`:''}
+      ${ph.k==='engorda'?`<div class="dr"><span class="drl">Ração engorda</span><span>${c.engRation>0?c.engRation+'d':'Inativa'}</span></div>`:''}
+      <div class="dr"><span class="drl">Arrobas</span><span>${(c.peso/15).toFixed(1)}@</span></div>
+      <div class="dr"><span class="drl">Valor de venda</span><span style="font-weight:700;color:var(--got)">${fmt(sellVal(c))}</span></div>
+    </div>
+    ${btns}`;
+  document.getElementById('dsheet').classList.add('open');
+  document.getElementById('dback').classList.add('on');
+}
+function milkOne(idx){const c=G.cows[idx];if(!c)return;if(c.milkedToday){toast('Já ordenhada hoje. 1x/dia.','warn');return;}if(!canMilk(c)){toast('Não pode ser ordenhada.','warn');return;}const l=milkAmt(c);c.milkedToday=true;G.milkStock+=l;addLog(c.name+' ordenhada: +'+l+'L.','good');toast('+'+l+'L','ok');checkMissions();renderHUD();renderCattle();openSheet(idx);}
+function closeSheet(){document.getElementById('dsheet').classList.remove('open');document.getElementById('dback').classList.remove('on');G.selCow=null;}
+
+// ========== PASTURE RENDER ==========
+function renderPasture(){
+  const g=document.getElementById('pqg');if(!g)return;
+  g.innerHTML='';
+  G.pqs.forEach((p,i)=>{
+    const d=document.createElement('div');
+    const gr=Math.round(20+p.h*.55);const dk=Math.round(15+p.h*.25);
+    d.className='pq'+(G.selPq===i?' sel':'');
+    d.style.background=`rgb(${p.h<20?120:20},${p.h<20?gr:gr},${p.h<20?20:dk})`;
+    d.style.border=`1px solid ${p.rest?'var(--amber)':'var(--bord)'}`;
+    const grassHTML=`<svg width="46" height="30" viewBox="0 0 60 40" style="opacity:${.3+p.h/100*.7}"><use href="#${p.h<25?'svg-dry':'svg-grass'}"/></svg>`;
+    d.innerHTML=grassHTML+`<div class="pq-l">${p.n}<br>${p.h|0}% ${p.rest?'💤':''}</div>`;
+    d.onclick=()=>{G.selPq=G.selPq===i?null:i;renderPqDet();}
+    g.appendChild(d);
+  });
+  renderPqDet();
+  const ps=document.getElementById('pstats');
+  if(ps){
+    const avg=G.pqs.length?G.pqs.reduce((s,p)=>s+p.h,0)/G.pqs.length:0;
+    ps.innerHTML=
+      `<div class="mc"><div class="mc-l">Piquetes</div><div class="mc-v">${G.pqs.length}</div></div>`+
+      `<div class="mc"><div class="mc-l">Altura média</div><div class="mc-v">${avg.toFixed(0)}%</div></div>`+
+      `<div class="mc"><div class="mc-l">Bônus/dia</div><div class="mc-v">+${(pastBonus()*100|0)/100}</div></div>`;
+  }
+}
+function renderPqDet(){
+  const el=document.getElementById('pqdet');if(!el)return;
+  if(G.selPq===null){el.innerHTML='';return;}
+  const p=G.pqs[G.selPq];
+  el.innerHTML=`<div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-top:8px">
+    <div class="dr"><span class="drl">Forrageira</span><span>${p.grass}</span></div>
+    <div class="dr"><span class="drl">Altura do capim</span><span>${p.h|0}%<div class="pw" style="width:80px;display:inline-block;margin-left:8px"><div class="pf" style="width:${p.h}%;background:var(--green)"></div></div></span></div>
+    <div class="dr"><span class="drl">Fertilidade</span><span>${p.fert|0}%</span></div>
+    <div class="dr"><span class="drl">Crescimento</span><span>${p.gr.toFixed(2)}x/dia</span></div>
+    <div class="dr"><span class="drl">Status</span><span class="chip ${p.rest?'cw':'cok'}">${p.rest?'Em descanso':'Ativo'}</span></div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:10px">
+      <button class="bp" onclick="adubarPq(${G.selPq})">🌱 Adubar R$200</button>
+      <button class="bb" onclick="irrigarPq(${G.selPq})">💧 Irrigar R$150</button>
+      <button class="ba" onclick="rocarPq(${G.selPq})">🌿 Roçada R$100</button>
+      <button class="${p.rest?'bp':'ba'}" onclick="G.pqs[${G.selPq}].rest=!G.pqs[${G.selPq}].rest;renderPasture()">${p.rest?'Ativar':'Descanso'}</button>
+    </div>
+  </div>`;
+}
+
+// ========== NUTRI ==========
+function renderNutricao(){
+  const st=document.getElementById('nstock');if(!st)return;
+  const all={...INSUMOS,...RACOES};
+  st.innerHTML='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">'+
+    Object.entries(all).map(([k,i])=>`<div class="mc"><div class="mc-l">${i.ic} ${i.n}</div><div class="mc-v">${G.inv[k]||0} ${i.unit}</div><div class="mc-s">R$${i.p}/${i.unit}</div></div>`).join('')+'</div>';
+  const dd=document.getElementById('ndieta');
+  if(dd)dd.innerHTML=`<div style="font-size:12px;color:var(--text2);line-height:2.1">
+    🐣 <b>Bezerros:</b> Leite materno + sal mineral (${G.inv.salMineral||0}kg)<br>
+    🐂 <b>Garrote/Recria:</b> Pasto + ração básica (${G.inv.racaoBasica||0}kg) + sal mineral<br>
+    🐂 <b>Engorda:</b> Pasto + ração engorda (${G.inv.racaoEngorda||0}kg) — confinamento +60%<br>
+    🐄 <b>Leiteiras adultas:</b> Pasto + ração + silagem (${G.inv.silagem||0}kg)<br>
+    <div style="color:var(--text3);font-size:11px;margin-top:6px">Custo estimado/dia: ${fmt(G.cows.length*12)} para ${G.cows.length} animais</div>`;
+}
+
+// ========== REPROD ==========
+function renderReprod(){
+  const el=document.getElementById('reprod');if(!el)return;
+  const fs=G.cows.filter(c=>BR[c.breed].sx==='F'&&getPhase(c.age).k==='adulto');
+  const pr=fs.filter(c=>c.pregnant);
+  const t=G.cows.filter(c=>c.breed==='touro'||c.breed==='touroBraford');
+  el.innerHTML=`<div class="mg4" style="margin-bottom:10px">
+    <div class="mc"><div class="mc-l">Fêmeas adultas</div><div class="mc-v">${fs.length}</div></div>
+    <div class="mc"><div class="mc-l">Prenhas</div><div class="mc-v">${pr.length}</div></div>
+    <div class="mc"><div class="mc-l">Touros</div><div class="mc-v">${t.length}</div></div>
+    <div class="mc"><div class="mc-l">Bezerros nascidos</div><div class="mc-v">${G.stats.born}</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Ações reprodutivas</div>
+    <div class="ar ar2">
+      <button class="bt2 bf" onclick="coberturaTouro()">🐃 Cobertura do touro</button>
+      <button class="bu bf" onclick="inseminarTodas()">🧬 Inseminar todas (IA)</button>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:8px">
+      IA precisa de: inseminador ou laboratório · hormônio IA (${G.inv.hormonio||0} doses)
+    </div>
+  </div>
+  ${pr.length?'<div class="card"><div class="card-title">Gestações em andamento</div>'+
+    pr.map(c=>`<div class="li">
+      <div style="background:var(--bg4);border-radius:8px;padding:4px"><svg width="44" height="33" viewBox="0 0 80 60"><use href="#svg-cow-f"/></svg></div>
+      <div class="li-info"><div class="li-n">${c.name}</div>
+      <div class="li-s">Gestação: ${c.pregDays}/280 dias</div>
+      <div class="pw" style="margin-top:5px"><div class="pf" style="width:${c.pregDays/280*100}%;background:var(--purple)"></div></div></div>
+      <span class="chip cpu">${280-c.pregDays}d</span></div>`).join('')+'</div>':''}`;
+}
+
+// ========== LEILÃO ==========
+function renderLeilao(){
+  const l=document.getElementById('alots');if(!l)return;
+  document.getElementById('aday').textContent=G.auction.day||'—';
+  if(!G.auction.active){l.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text2)"><div style="font-size:32px;margin-bottom:8px">🏆</div>Próximo leilão ao fim do mês.</div>`;
+  } else {
+    l.innerHTML=G.auction.lots.filter(lt=>!lt.won).map(lt=>{
+      const b=BR[lt.breed];
+      return`<div class="aui">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <div style="background:var(--bg4);border-radius:8px;padding:6px"><svg width="60" height="45" viewBox="0 0 80 60"><use href="#${lt.breed==='touroBraford'?'svg-bull':BR[lt.breed].sx==='F'?'svg-cow-f':'svg-cow-m'}"/></svg></div>
+          <div><div style="font-weight:700;font-size:14px">${lt.n}</div>
+          <div style="font-size:12px;color:var(--text2)">${b.n} · ${lt.age} dias</div>
+          <div style="font-size:13px;color:var(--got);font-weight:700;margin-top:3px">Lance atual: ${fmt(lt.cb)}</div>
+          <div style="font-size:11px;color:var(--text2)">Líder: ${lt.last}</div></div>
+        </div>
+        <div style="max-height:60px;overflow-y:auto;font-size:11px;color:var(--text3);margin-bottom:8px">${lt.bids.slice(-4).map(b=>`${b.who}: ${fmt(b.v)}`).join(' · ')}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <button class="bb bf" onclick="bidLot(${lt.id})">🏷️ Dar lance (+R$300)</button>
+          ${lt.mine?`<button class="bg2 bf" onclick="winLot(${lt.id})">✅ Arrematar ${fmt(lt.cb)}</button>`:'<button disabled class="bf">Você não lidera</button>'}
+        </div>
+      </div>`;}).join('');
+  }
+  const as=document.getElementById('asell');
+  if(as){
+    const sv=G.cows.filter(c=>{const ph=getPhase(c.age).k;return ph==='adulto'||ph==='engorda';});
+    as.innerHTML=sv.length?sv.map(c=>{const idx=G.cows.indexOf(c);
+      const ick=cowIconKey(c);let svgS='';
+      if(ick==='bezerro')svgS='svg-calf';else if(ick==='touro')svgS='svg-bull';else if(ick==='macho')svgS='svg-cow-m';else svgS='svg-cow-f';
+      return`<div class="li">
+        <div style="background:var(--bg4);border-radius:8px;padding:4px"><svg width="44" height="33" viewBox="0 0 80 60"><use href="#${svgS}"/></svg></div>
+        <div class="li-info"><div class="li-n">${c.name}</div>
+        <div class="li-s">${c.peso.toFixed(0)}kg · ${getPhase(c.age).l} · ${fmt(sellVal(c))} direto</div></div>
+        <button class="bg2" style="font-size:11px;padding:7px 10px" onclick="sellOnAuction(${idx})">🏆 +15%</button>
+      </div>`;}).join(''):
+      '<div style="color:var(--text2);padding:8px">Sem animais prontos (adulto/engorda).</div>';
+  }
+}
+
+// ========== FAZENDA ==========
+function renderFazenda(){
+  const bd=document.getElementById('bdone');const ba=document.getElementById('bavail');if(!bd||!ba)return;
+  const built=Object.entries(G.builds).filter(([k,b])=>b.built);
+  const avail=Object.entries(G.builds).filter(([k,b])=>!b.built);
+  bd.innerHTML=built.length?built.map(([k,b])=>`<div class="li"><span style="font-size:24px">${b.ic}</span><div class="li-info"><div class="li-n">${b.n} ✓</div><div class="li-s">${b.eff}</div></div></div>`).join(''):'<div style="color:var(--text2)">Nenhuma benfeitoria ainda.</div>';
+  ba.innerHTML=avail.map(([k,b])=>`<div class="sc"><div class="sc-img"><span style="font-size:36px">${b.ic}</span></div><div class="sc-n">${b.n}</div><div class="sc-d">${b.eff}</div><div class="sc-p">${fmt(b.cost)}</div><button class="bp bf" onclick="buildIt('${k}')">Construir</button></div>`).join('');
+}
+function renderMachines(){
+  const el=document.getElementById('mlist');if(!el)return;
+  el.innerHTML=Object.entries(MACH).map(([k,m])=>{
+    let img='';
+    if(k==='trator'||k==='rocadeira'||k==='distribuidor')img=`<div style="padding:4px">${tractorSVG(60,42)}</div>`;
+    else img=`<span style="font-size:34px">${k==='ordenhadeira'?'⚙️':k==='caminhao'?'🚛':'🚁'}</span>`;
+    return`<div class="sc"><div class="sc-img">${img}</div><div class="sc-n">${m.n}${m.owned?' ✓':''}</div><div class="sc-d">${m.desc}</div>${m.owned?`<div style="font-size:11px;color:var(--text2)">Cond. 100% · R$${m.mnt}/mês</div>`:`<div class="sc-p">${fmt(m.cost)}</div><button class="bp bf" onclick="buyMach('${k}')">Comprar</button>`}</div>`;}).join('');
+}
+function renderFuncionarios(){
+  const sl=document.getElementById('slist');const hl=document.getElementById('hlist');if(!sl||!hl)return;
+  sl.innerHTML=G.staff.length?G.staff.map((s,i)=>`<div class="li">
+    <div style="background:var(--bg4);border-radius:8px;padding:4px">${workerSVG(s.type,30,42)}</div>
+    <div class="li-info"><div class="li-n">${s.name}</div><div class="li-s">R$${s.salary}/mês</div></div>
+    <button class="br" style="font-size:11px;padding:6px 10px" onclick="fireStaff(${i})">Dispensar</button></div>`).join(''):
+    '<div style="color:var(--text2)">Sem funcionários.</div>';
+  hl.innerHTML=Object.entries(STAFF).map(([k,t])=>`<div class="sc">
+    <div class="sc-img">${workerSVG(k,38,53)}</div>
+    <div class="sc-n">${t.n}</div><div class="sc-d">${t.desc}</div>
+    <div class="sc-p">R$${t.sal}/mês</div>
+    <button class="bp bf" onclick="hireStaff('${k}')">Contratar</button></div>`).join('');
+}
+
+// ========== MERCADO ==========
+function renderMercado(){
+  const mp=document.getElementById('mprices');if(!mp)return;
+  mp.innerHTML=Object.entries(MKT).map(([k,m])=>{
+    const d=(m.p-m.base)/m.base*100;
+    return`<div class="mi"><div style="flex:1"><div style="font-weight:600">${m.l}</div><div style="font-size:11px;color:var(--text2)">Base: R$${m.base.toFixed(2)}</div></div>
+    <div style="text-align:right"><div style="font-size:17px;font-weight:700">R$${m.p.toFixed(2)}</div>
+    <div style="font-size:11px;color:${d>2?'var(--gt)':d<-2?'var(--rt)':'var(--text2)'}">${d>2?'▲':d<-2?'▼':'–'} ${Math.abs(d).toFixed(1)}%</div></div></div>`;}).join('');
+  renderContracts();renderJornal();
+}
+function renderContracts(){
+  const el=document.getElementById('mcont');if(!el)return;
+  const av=G.contracts.filter(c=>!c.active&&!c.done);
+  const ac=G.contracts.filter(c=>c.active&&!c.done);
+  let h=`<div style="font-weight:600;margin-bottom:8px">Contratos ativos</div>`;
+  h+=ac.length?ac.map(c=>`<div class="li"><span style="font-size:22px">📋</span><div class="li-info"><div class="li-n">${c.n}</div><div class="li-s">${c.qty} ${c.type==='leite'?'L':'cab'} · Prazo: dia ${c.deadline}</div></div><span class="chip cb">Ativo</span></div>`).join(''):'<div style="color:var(--text2);font-size:12px;margin-bottom:10px">Nenhum ativo.</div>';
+  h+=`<div style="font-weight:600;margin:12px 0 8px">Ofertas disponíveis</div>`;
+  h+=av.length?av.map(c=>`<div class="li"><span style="font-size:22px">🤝</span><div class="li-info"><div class="li-n">${c.n}</div><div class="li-s">${c.qty} ${c.type==='leite'?'L':'cab'} · Bônus R$${c.bonus} · ${c.days}d</div></div><button class="bp" style="font-size:11px;padding:6px 10px" onclick="activateContract(${G.contracts.indexOf(c)})">Aceitar</button></div>`).join(''):'<div style="color:var(--text2);font-size:12px">Sem ofertas.</div>';
+  el.innerHTML=h;
+}
+function renderJornal(){
+  const el=document.getElementById('mjornal');if(!el)return;
+  el.innerHTML=(G.jEv?`<div style="background:var(--gobg);border:1px solid var(--gold);border-radius:var(--r);padding:12px;margin-bottom:10px"><div style="font-weight:700;font-size:14px;margin-bottom:4px">📰 ${G.jEv.t}</div><div style="font-size:12px">${G.jEv.d}</div><div style="font-size:11px;color:var(--at);margin-top:4px">Efeito: ${G.jDays} dias restantes</div></div>`:'<div style="color:var(--text2);padding:8px">Nenhuma notícia no momento.</div>')+
+    '<div style="font-size:11px;color:var(--text3);margin-top:8px">Notícias chegam aleatoriamente ao avançar os dias.</div>';
+}
+
+// ========== SHOP ==========
+function renderShop(){
+  const sa=document.getElementById('lanimais');if(!sa)return;
+  sa.innerHTML=Object.entries(BR).map(([k,b])=>{
+    const ick=b.sx==='T'?'svg-bull':b.sx==='M'?'svg-cow-m':'svg-cow-f';
+    return`<div class="sc">
+      <div class="sc-img"><svg width="70" height="53" viewBox="0 0 80 60"><use href="#${ick}"/></svg></div>
+      <div class="sc-n">${b.n}</div>
+      <div class="sc-d">${b.desc}${b.milk?'<br>🥛 Leite: '+b.milk+'L/dia':''}<br>📈 Ganho: ${b.gd}kg/d · Máx: ${b.mp}kg</div>
+      <div class="sc-p">${fmt(b.cost)}</div>
+      <button class="bp bf" onclick="buyCow('${k}')">Comprar</button></div>`;}).join('');
+  const si=document.getElementById('linsumos');
+  if(si)si.innerHTML=Object.entries(INSUMOS).map(([k,i])=>`<div class="sc"><div class="sc-img"><span style="font-size:36px">${i.ic}</span></div><div class="sc-n">${i.n}</div><div class="sc-d">${i.desc}</div><div style="font-size:11px;color:var(--text2);margin-bottom:5px">Estoque: ${G.inv[k]||0} ${i.unit}</div><div class="sc-p">${fmt(i.p*10)} (10 ${i.unit})</div><button class="ba bf" onclick="buyInsumo('${k}',10)">Comprar 10</button></div>`).join('');
+  const sr=document.getElementById('lracao');
+  if(sr)sr.innerHTML=Object.entries(RACOES).map(([k,i])=>`<div class="sc"><div class="sc-img"><span style="font-size:36px">${i.ic}</span></div><div class="sc-n">${i.n}</div><div class="sc-d">${i.desc}</div><div style="font-size:11px;color:var(--text2);margin-bottom:5px">Estoque: ${G.inv[k]||0} ${i.unit}</div><div class="sc-p">${fmt(i.p*100)} (100kg)</div><button class="ba bf" onclick="buyInsumo('${k}',100)">Comprar 100kg</button></div>`).join('');
+}
+
+// ========== FINANÇAS ==========
+function renderFinancas(){
+  const fm=document.getElementById('finmet');if(!fm)return;
+  const ta=G.cows.reduce((s,c)=>s+sellVal(c),0)+G.money;
+  const lu=G.fin.inc-G.fin.exp;
+  fm.innerHTML=
+    `<div class="mc"><div class="mc-l">Capital</div><div class="mc-v" style="color:var(--gt)">${fmt(G.money)}</div></div>`+
+    `<div class="mc"><div class="mc-l">Receita mês</div><div class="mc-v">${fmt(G.fin.inc)}</div></div>`+
+    `<div class="mc"><div class="mc-l">Despesa mês</div><div class="mc-v" style="color:var(--rt)">${fmt(G.fin.exp)}</div></div>`+
+    `<div class="mc"><div class="mc-l">Lucro</div><div class="mc-v" style="color:${lu>=0?'var(--gt)':'var(--rt)'}">${lu>=0?'+':''}${fmt(lu)}</div></div>`+
+    `<div class="mc"><div class="mc-l">Patrimônio</div><div class="mc-v">${fmt(ta)}</div></div>`+
+    `<div class="mc"><div class="mc-l">Reputação</div><div class="mc-v">${G.rep}/100</div></div>`;
+  const fh=document.getElementById('finhist');
+  if(fh)fh.innerHTML=G.fin.hist.length?
+    '<table><thead><tr><th>Mês</th><th>Receita</th><th>Despesa</th><th class="tr">Lucro</th></tr></thead><tbody>'+
+    G.fin.hist.map(h=>`<tr><td>${h.m}</td><td>${fmt(h.inc)}</td><td>${fmt(h.exp)}</td><td class="tr" style="color:${h.profit>=0?'var(--gt)':'var(--rt)'};font-weight:700">${h.profit>=0?'+':''}${fmt(h.profit)}</td></tr>`).join('')+
+    '</tbody></table>':'<div style="color:var(--text2)">Dados após 30 dias.</div>';
+  const fl=document.getElementById('finloan');
+  if(fl)fl.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+    <button class="bb bf" onclick="takeLoan(20000,'Custeio')">Custeio R$20k</button>
+    <button class="bb bf" onclick="takeLoan(50000,'Estrutura')">Estrutura R$50k</button>
+    <button class="bb bf" onclick="takeLoan(100000,'Expansão')">Expansão R$100k</button>
+    <button class="bg2 bf" onclick="takeLoan(200000,'Grande produtor')">Grande R$200k</button>
+  </div>`+
+  (G.loans.filter(l=>l.rem>0).map(l=>`<div class="loan"><div style="font-weight:600">${l.n}</div><div style="font-size:11px;color:var(--text2)">Parcela: ${fmt(l.mo)}/mês · Restante: ${fmt(l.rem)}</div></div>`).join('')||'<div style="color:var(--text2);font-size:12px">Sem financiamentos.</div>');
+  const fs=document.getElementById('finseg');
+  if(fs)fs.innerHTML=`<div class="li"><div style="background:var(--bg4);border-radius:8px;padding:6px;font-size:26px">🛡️</div>
+    <div class="li-info"><div class="li-n">Seguro rural</div><div class="li-s">R$${G.ins.premium}/mês · Cobre ${G.ins.cov*100}% das baixas</div></div>
+    <button class="${G.ins.active?'br':'bp'}" onclick="toggleIns()" style="font-size:12px">${G.ins.active?'Cancelar':'Contratar'}</button></div>`;
+}
+
+// ========== VET ==========
+function renderVet(){
+  const vs=document.getElementById('vetsick');if(!vs)return;
+  const sick=G.cows.filter(c=>c.sick);
+  const vb=document.getElementById('vetbadge');
+  if(vb)vb.innerHTML=sick.length?`<span class="chip ce">${sick.length} doente(s)</span>`:'<span class="chip cok">Todos saudáveis ✓</span>';
+  vs.innerHTML=(sick.length?sick.map(c=>{const idx=G.cows.indexOf(c);
+    const ick=cowIconKey(c);let svgS='';
+    if(ick==='bezerro')svgS='svg-calf';else if(ick==='touro')svgS='svg-bull';else if(ick==='macho')svgS='svg-cow-m';else svgS='svg-cow-f';
+    return`<div class="li">
+      <div style="background:var(--bg4);border-radius:8px;padding:4px"><svg width="44" height="33" viewBox="0 0 80 60"><use href="#${svgS}"/></svg></div>
+      <div class="li-info"><div class="li-n">${c.name}</div><div class="li-s" style="color:var(--rt)">${c.disease} · ${c.sickDays}d · ${c.hp}%</div></div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <button class="br" style="font-size:10px;padding:5px 7px" onclick="tratarAnimal(${idx},'ab')">💊${G.inv.antibiotico||0}</button>
+        <button class="ba" style="font-size:10px;padding:5px 7px" onclick="tratarAnimal(${idx},'vet')">👨‍⚕️R$140</button>
+      </div></div>`;}).join(''):
+    '<div style="color:var(--text2);padding:8px 0">Rebanho saudável ✓</div>')+
+  `<div style="margin-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px">
+    <button class="ba bf" onclick="vetGeral()">Vet. Geral R$300</button>
+    <button class="bp bf" onclick="vacinarTodos()">💉 Vacinar todos</button>
+    <button class="ba bf" onclick="vermifugarTodos()">💊 Vermifugar</button>
+  </div>`;
+  const vc=document.getElementById('vetcal');
+  if(vc)vc.innerHTML=`<div class="mg"><div class="mc"><div class="mc-l">Próx. vacinação</div><div class="mc-v" style="color:${G.vetCal.vac<=7?'var(--rt)':'var(--gt)'}">Dia ${G.day+G.vetCal.vac}</div><div class="mc-s">${G.vetCal.vac}d</div></div>
+    <div class="mc"><div class="mc-l">Vermifugação</div><div class="mc-v" style="color:${G.vetCal.verm<=7?'var(--rt)':'var(--gt)'}">Dia ${G.day+G.vetCal.verm}</div><div class="mc-s">${G.vetCal.verm}d</div></div>
+    <div class="mc"><div class="mc-l">Vacinados</div><div class="mc-v">${G.cows.filter(c=>c.vaccinated).length}/${G.cows.length}</div></div>
+    <div class="mc"><div class="mc-l">Antibióticos</div><div class="mc-v">${G.inv.antibiotico||0} doses</div></div></div>`;
+}
+
+// ========== MISSIONS ==========
+function renderMissoes(){
+  const xa=document.getElementById('xparea');if(!xa)return;
+  xa.innerHTML=`<div class="mc"><div class="mc-l">Nível</div><div class="mc-v" style="color:var(--got)">${G.level}</div></div>
+    <div class="mc"><div class="mc-l">XP</div><div class="mc-v">${G.xp}</div></div>
+    <div class="mc"><div class="mc-l">Reputação</div><div class="mc-v">${G.rep}</div></div>
+    <div class="mc"><div class="mc-l">Missões</div><div class="mc-v">${G.missions.filter(m=>m.done).length}/${G.missions.length}</div></div>`;
+  const ma=document.getElementById('mssact');const md=document.getElementById('mssdone');
+  if(ma)ma.innerHTML=G.missions.filter(m=>!m.done).map(m=>`<div class="mss"><div style="font-weight:700;font-size:13px">🎯 ${m.n}</div><div style="font-size:11px;color:var(--text2);margin-top:2px">${m.d}</div>
+    <div class="pw" style="margin:7px 0"><div class="pf" style="width:${Math.min(100,(m.prog||0)/m.tgt*100)}%;background:var(--green)"></div></div>
+    <div style="font-size:11px;color:var(--text3)">${m.prog||0}/${m.tgt}</div>
+    <div style="font-size:11px;color:var(--got);margin-top:4px">🏆 Recompensa: ${fmt(m.rew)} + ${m.xp}xp</div></div>`).join('')||'<div style="color:var(--text2)">Todas concluídas!</div>';
+  if(md)md.innerHTML=G.missions.filter(m=>m.done).map(m=>`<div class="mss done">✅ ${m.n} — <span style="color:var(--text2)">${m.d}</span></div>`).join('')||'<div style="color:var(--text2)">Nenhuma ainda.</div>';
+  const fc=document.getElementById('fairpanel');
+  if(fc)fc.innerHTML=`<div class="fair">
+    <div style="font-size:15px;font-weight:800;margin-bottom:5px">🌾 Exposição Agropecuária Regional</div>
+    <div style="font-size:12px;margin-bottom:6px">Apresente seus melhores animais. +reputação, +XP e prêmio em dinheiro.</div>
+    <div style="font-size:12px;color:var(--at)">Exige: 10+ animais · Taxa: R$500</div>
+    <button class="bg2 bf" style="margin-top:10px" onclick="joinFair()">Participar da feira</button>
+  </div>`;
+}
+
+// ========== RANKING ==========
+function renderRanking(){
+  const el=document.getElementById('rklist');const sp=document.getElementById('rkstats');if(!el)return;
+  const my=G.money+G.cows.reduce((s,c)=>s+sellVal(c),0);
+  const ot=[{n:'Fazenda São João',sc:92000,cows:130,lv:9},{n:'Agropecuária Silva',sc:70000,cows:105,lv:8},{n:'Sítio Esperança',sc:48000,cows:72,lv:6},{n:'Fazenda do Artur',sc:32000,cows:55,lv:5},{n:'Ranch Cerrado',sc:20000,cows:38,lv:4}];
+  const all=[{n:'Sua Fazenda',sc:my,cows:G.cows.length,lv:G.level,me:true},...ot].sort((a,b)=>b.sc-a.sc);
+  el.innerHTML=all.map((f,i)=>`<div class="rnk" style="${f.me?'border-color:var(--green);background:var(--gbg)':''}">
+    <div style="font-size:17px;font-weight:800;width:28px;text-align:center;color:${i===0?'var(--got)':i===1?'var(--text2)':i===2?'var(--at)':'var(--text3)'}">${i+1}°</div>
+    <div style="font-size:22px">${f.me?'🏠':'🐄'}</div>
+    <div style="flex:1"><div style="font-weight:700${f.me?';color:var(--gt)':''}">${f.n}</div><div style="font-size:11px;color:var(--text2)">${f.cows} animais · Nível ${f.lv}</div></div>
+    <div style="text-align:right"><div style="font-weight:700">${fmt(f.sc)}</div><div style="font-size:10px;color:var(--text3)">patrimônio</div></div>
+  </div>`).join('');
+  if(sp)sp.innerHTML=
+    `<div class="mc"><div class="mc-l">Bezerros nascidos</div><div class="mc-v">${G.stats.born}</div></div>`+
+    `<div class="mc"><div class="mc-l">Animais vendidos</div><div class="mc-v">${G.stats.sold}</div></div>`+
+    `<div class="mc"><div class="mc-l">Baixas</div><div class="mc-v">${G.stats.dead}</div></div>`+
+    `<div class="mc"><div class="mc-l">Leite vendido</div><div class="mc-v">${G.milkSold}L</div></div>`;
+}
+
+// ========== LOG ==========
+function renderLog(){const el=document.getElementById('lbox');if(!el)return;el.innerHTML=G.log.slice(0,30).map(l=>`<div class="ll ${l.t}">${l.m}</div>`).join('');}
+
+// ========== TABS ==========
+const ALL_TABS=['rebanho','pastagem','leilao','fazenda','mercado','nutricao','reproducao','vet','loja','financas','missoes','ranking'];
+function showTab(id){
+  ALL_TABS.forEach(t=>{const p=document.getElementById('tab-'+t);if(p)p.classList.toggle('on',t===id);});
+  document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));
+  const bn=document.getElementById('bn-'+id);if(bn)bn.classList.add('on');
+  if(id==='pastagem')renderPasture();
+  if(id==='nutricao')renderNutricao();
+  if(id==='reproducao')renderReprod();
+  if(id==='leilao')renderLeilao();
+  if(id==='fazenda')renderFazenda();
+  if(id==='mercado')renderMercado();
+  if(id==='loja')renderShop();
+  if(id==='financas')renderFinancas();
+  if(id==='vet')renderVet();
+  if(id==='missoes')renderMissoes();
+  if(id==='ranking')renderRanking();
+}
+function fsTab(id){
+  ['infra','maq','staff'].forEach(t=>{const e=document.getElementById('fs-'+t);if(e)e.style.display=t===id?'':'none';});
+  document.querySelectorAll('#fsub .snb').forEach((b,i)=>b.classList.toggle('on',['infra','maq','staff'][i]===id));
+  if(id==='maq')renderMachines();if(id==='staff')renderFuncionarios();
+}
+function mTab(id){
+  ['precos','contratos','jornal'].forEach(t=>{const e=document.getElementById('mp-'+t);if(e)e.style.display=t===id?'':'none';});
+  document.querySelectorAll('#msub .snb').forEach((b,i)=>b.classList.toggle('on',['precos','contratos','jornal'][i]===id));
+  if(id==='jornal')renderJornal();if(id==='contratos')renderContracts();
+}
+function lTab(id){
+  ['animais','insumos','racao'].forEach(t=>{const e=document.getElementById('lt-'+t);if(e)e.style.display=t===id?'':'none';});
+  document.querySelectorAll('#tab-loja .snb').forEach((b,i)=>b.classList.toggle('on',['animais','insumos','racao'][i]===id));
+}
+function showMore(){document.getElementById('moresheet').style.transform='translateY(0)';document.getElementById('moreback').style.display='block';}
+function closeMore(){document.getElementById('moresheet').style.transform='translateY(100%)';document.getElementById('moreback').style.display='none';}
+function renderAll(){renderHUD();renderCattle();renderLog();updateBadges();}
+
+// ========== INIT ==========
+function init(){
+  Object.keys(BUILDS).forEach(k=>G.builds[k]={...BUILDS[k],built:false});
+  Object.keys(MACH).forEach(k=>G.mach[k]={...MACH[k],owned:false,condition:100});
+  Object.keys({...INSUMOS,...RACOES}).forEach(k=>G.inv[k]=0);
+  G.inv.racaoBasica=200;G.inv.salMineral=20;G.inv.vacina=12;G.inv.vermifugo=8;
+  for(let i=0;i<4;i++)G.pqs.push(makePq());
+  G.missions=MISSIONS.map(m=>({...m,prog:0,done:false}));
+  Object.keys(MKT).forEach(k=>{MKT[k].p=MKT[k].base*(.88+Math.random()*.24);});
+  genContracts();genAuction();
+  addLog('🌅 Bem-vindo ao PECUÁRIA SIMULATOR v3.0!','gold');
+  addLog('💡 Comece comprando animais na aba Loja.','info');
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>
