@@ -1,0 +1,4421 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#050e04">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pecuária Sim">
+<meta name="description" content="Simulador online de pecuária. Gerencie sua fazenda, compre e venda gado, compita no ranking global.">
+<link rel="manifest" href="manifest.json">
+<title>Pecuária Simulator — Online</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --glass:rgba(10,20,8,0.72);--glass2:rgba(15,30,10,0.88);--glass3:rgba(20,40,14,0.60);
+  --border:rgba(80,200,60,0.18);--border2:rgba(80,200,60,0.35);
+  --green:#3ecf18;--gbg:rgba(62,207,24,0.15);--gt:#6eff3a;
+  --red:#e03030;--rbg:rgba(224,48,48,0.18);--rt:#ff5555;
+  --amber:#d08000;--abg:rgba(208,128,0,0.18);--at:#ffb020;
+  --blue:#1870d0;--bbg:rgba(24,112,208,0.18);--bt:#48aaff;
+  --purple:#7040d0;--pubg:rgba(112,64,208,0.18);--put:#b080ff;
+  --teal:#10a080;--tbg:rgba(16,160,128,0.18);--tt:#30d8a8;
+  --gold:#c89000;--gobg:rgba(200,144,0,0.18);--got:#ffc820;
+  --text:#f0ffe8;--text2:#a8d898;--text3:#608050;
+  --r:12px;--rl:18px;
+  --font:'Segoe UI',system-ui,sans-serif;
+  --sb:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;overflow:hidden;background:#050e04}
+body{font-family:var(--font);font-size:14px;color:var(--text)}
+
+/* ── BG LAYER ── */
+#bg-layer{position:fixed;inset:0;z-index:0;overflow:hidden}
+#bg-layer::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,14,4,.6) 0%,rgba(5,14,4,.9) 100%)}
+#bg-main{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45;transition:opacity 1s}
+
+/* ══════════════════════════════════════════════
+   AUTH SCREEN
+══════════════════════════════════════════════ */
+#auth-screen{
+  position:fixed;inset:0;z-index:1000;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+}
+.auth-card{
+  width:100%;max-width:400px;
+  background:rgba(10,22,8,.94);
+  backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+  border:1px solid var(--border2);
+  border-radius:24px;
+  overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,.7),0 0 0 1px rgba(62,207,24,.08);
+}
+.auth-hero{
+  position:relative;height:160px;overflow:hidden;
+  background:linear-gradient(135deg,#0a2010,#0d3818);
+}
+.auth-hero-img{width:100%;height:100%;object-fit:cover;opacity:.5}
+.auth-hero-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(10,22,8,.95) 0%,transparent 60%)}
+.auth-logo{position:absolute;bottom:14px;left:20px;right:20px}
+.auth-logo-title{font-size:22px;font-weight:900;color:var(--gt);letter-spacing:.08em;text-shadow:0 0 20px rgba(110,255,58,.4)}
+.auth-logo-title em{color:var(--at);font-style:normal}
+.auth-logo-sub{font-size:11px;color:var(--text2);margin-top:2px;letter-spacing:.04em}
+.auth-body{padding:20px}
+.auth-tabs{display:flex;gap:6px;margin-bottom:20px;background:rgba(255,255,255,.06);border-radius:var(--r);padding:4px}
+.auth-tab{flex:1;padding:9px;text-align:center;font-size:13px;font-weight:600;border-radius:9px;cursor:pointer;transition:all .2s;color:var(--text3)}
+.auth-tab.on{background:var(--gbg);color:var(--gt);box-shadow:0 2px 12px rgba(62,207,24,.2)}
+.auth-form{display:flex;flex-direction:column;gap:12px}
+.inp-wrap{position:relative}
+.inp-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none;z-index:1}
+.auth-input{
+  width:100%;padding:12px 12px 12px 38px;
+  background:rgba(255,255,255,.07);
+  border:1px solid var(--border);
+  border-radius:var(--r);color:var(--text);font-family:var(--font);font-size:14px;
+  transition:border-color .2s,background .2s;outline:none;
+}
+.auth-input:focus{border-color:var(--green);background:rgba(62,207,24,.08)}
+.auth-input::placeholder{color:var(--text3)}
+.auth-btn{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,rgba(62,207,24,.3),rgba(40,180,10,.25));
+  border:1px solid var(--green);border-radius:var(--r);
+  color:var(--gt);font-size:15px;font-weight:800;
+  cursor:pointer;letter-spacing:.04em;transition:all .2s;
+  text-shadow:0 0 10px rgba(110,255,58,.3);
+  box-shadow:0 4px 20px rgba(62,207,24,.15);
+}
+.auth-btn:hover{background:linear-gradient(135deg,rgba(62,207,24,.4),rgba(40,180,10,.35));box-shadow:0 4px 28px rgba(62,207,24,.3)}
+.auth-btn:active{transform:scale(.97)}
+.auth-divider{text-align:center;font-size:11px;color:var(--text3);margin:4px 0}
+.auth-link{color:var(--bt);font-size:12px;text-align:center;cursor:pointer;margin-top:4px;text-decoration:underline}
+.auth-error{background:var(--rbg);border:0.5px solid var(--red);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--rt);display:none}
+.auth-error.show{display:block}
+.auth-success{background:var(--gbg);border:0.5px solid var(--green);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--gt);display:none}
+.auth-success.show{display:block}
+.remember-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);cursor:pointer}
+.remember-row input{accent-color:var(--green);width:15px;height:15px}
+.auth-footer{text-align:center;font-size:10px;color:var(--text3);padding:12px 20px;border-top:0.5px solid var(--border)}
+.avatar-ring{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--teal));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
+
+/* ══════════════════════════════════════════════
+   PROFILE POPUP
+══════════════════════════════════════════════ */
+#profile-popup{
+  position:fixed;inset:0;z-index:400;display:none;
+  align-items:flex-start;justify-content:center;padding:60px 10px 10px;
+}
+#profile-popup.open{display:flex}
+.profile-card{
+  width:100%;max-width:480px;
+  background:rgba(10,22,8,.96);backdrop-filter:blur(28px);
+  border:1px solid var(--border2);border-radius:20px;overflow:hidden;
+  max-height:85vh;overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.8)
+}
+.profile-hero{
+  background:linear-gradient(135deg,rgba(62,207,24,.15),rgba(16,160,128,.1));
+  padding:20px;border-bottom:0.5px solid var(--border);
+  display:flex;align-items:center;gap:14px
+}
+.profile-avatar-big{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--teal));display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;flex-shrink:0;border:2px solid var(--green);box-shadow:0 0 20px rgba(62,207,24,.3)}
+.profile-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.badge{font-size:10px;padding:3px 8px;border-radius:20px;font-weight:700;border:0.5px solid}
+.badge-gold{background:var(--gobg);color:var(--got);border-color:var(--gold)}
+.badge-green{background:var(--gbg);color:var(--gt);border-color:var(--green)}
+.badge-blue{background:var(--bbg);color:var(--bt);border-color:var(--blue)}
+.badge-purple{background:var(--pubg);color:var(--put);border-color:var(--purple)}
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px}
+.pstat{background:rgba(255,255,255,.06);border:0.5px solid var(--border);border-radius:var(--r);padding:10px;text-align:center}
+.pstat-v{font-size:17px;font-weight:800}
+.pstat-l{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+
+/* ══════════════════════════════════════════════
+   RANKING ONLINE PANEL
+══════════════════════════════════════════════ */
+.rank-online-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;background:rgba(255,255,255,.06);
+  border-radius:var(--r);margin-bottom:6px;
+  border:0.5px solid var(--border);
+  transition:all .2s
+}
+.rank-online-item.me{border-color:var(--green);background:rgba(62,207,24,.08)}
+.rank-online-item.top1{border-color:var(--gold);background:rgba(200,144,0,.08)}
+.rank-pos-num{font-size:16px;font-weight:900;width:32px;text-align:center}
+.rank-flag{font-size:18px}
+.rank-info{flex:1;min-width:0}
+.rank-name{font-weight:700;font-size:13px}
+.rank-farm{font-size:10px;color:var(--text2);margin-top:1px}
+.rank-value{text-align:right}
+.rank-score{font-weight:800;font-size:14px}
+.rank-change{font-size:10px;margin-top:1px}
+.rank-up{color:var(--gt)}.rank-dn{color:var(--rt)}.rank-eq{color:var(--text3)}
+.rank-filter-row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:10px;padding-bottom:2px}
+.rank-filter-row::-webkit-scrollbar{display:none}
+.rfbtn{font-size:11px;padding:5px 12px;border-radius:20px;white-space:nowrap;border:0.5px solid var(--border2);background:rgba(255,255,255,.06);color:var(--text2);cursor:pointer;flex-shrink:0;transition:all .15s}
+.rfbtn.on{background:var(--gbg);color:var(--gt);border-color:var(--green)}
+.online-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 6px var(--gt);animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+.server-info{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);padding:6px 10px;background:rgba(62,207,24,.08);border-radius:var(--r);margin-bottom:10px;border:0.5px solid var(--border)}
+
+/* ══════════════════════════════════════════════
+   JORNAL DO AGRO — REAL-TIME
+══════════════════════════════════════════════ */
+.news-card{
+  background:rgba(255,255,255,.06);border:0.5px solid var(--border);
+  border-radius:var(--rl);overflow:hidden;margin-bottom:10px;
+  transition:all .2s
+}
+.news-card.high-impact{border-color:var(--amber);background:rgba(208,128,0,.08)}
+.news-card.critical{border-color:var(--red);background:rgba(224,48,48,.08);animation:news-pulse 2s infinite}
+@keyframes news-pulse{0%,100%{box-shadow:none}50%{box-shadow:0 0 16px rgba(224,48,48,.3)}}
+.news-photo{width:100%;height:100px;object-fit:cover}
+.news-body{padding:12px}
+.news-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.news-tag{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.news-time{font-size:10px;color:var(--text3)}
+.news-title{font-size:14px;font-weight:800;margin-bottom:5px;line-height:1.3}
+.news-summary{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:8px}
+.news-impact{display:flex;align-items:center;gap:6px;font-size:11px;padding:6px 10px;background:rgba(255,255,255,.05);border-radius:var(--r)}
+.impact-chip{font-size:10px;padding:2px 7px;border-radius:12px;font-weight:700}
+.impact-pos{background:rgba(62,207,24,.2);color:var(--gt)}
+.impact-neg{background:rgba(224,48,48,.2);color:var(--rt)}
+.impact-neu{background:rgba(255,255,255,.1);color:var(--text2)}
+.news-ai-badge{font-size:9px;color:var(--bt);padding:2px 6px;background:rgba(24,112,208,.15);border-radius:8px;border:0.5px solid rgba(24,112,208,.3)}
+.news-loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:24px;color:var(--text2);font-size:13px}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--gt);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ══════════════════════════════════════════════
+   MARKET LIVE PANEL
+══════════════════════════════════════════════ */
+.mkt-live-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.live-badge{background:rgba(224,48,48,.2);color:var(--rt);border:0.5px solid var(--red);font-size:10px;padding:3px 8px;border-radius:20px;font-weight:700;letter-spacing:.05em;display:flex;align-items:center;gap:4px}
+.mkt-item-pro{
+  display:flex;align-items:center;gap:10px;padding:12px;
+  background:rgba(255,255,255,.06);border-radius:var(--r);margin-bottom:7px;
+  border:0.5px solid var(--border);position:relative;overflow:hidden
+}
+.mkt-item-pro::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px 0 0 2px}
+.mkt-item-pro.up::before{background:var(--green)}
+.mkt-item-pro.dn::before{background:var(--red)}
+.mkt-chart-mini{display:flex;align-items:flex-end;gap:2px;height:28px}
+.mkt-bar{width:5px;border-radius:2px 2px 0 0;transition:height .3s}
+.mkt-ref{font-size:10px;color:var(--text3);margin-top:2px}
+.mkt-ai-note{font-size:11px;color:var(--bt);padding:8px 12px;background:rgba(24,112,208,.08);border-radius:var(--r);border:0.5px solid rgba(24,112,208,.2);margin-top:8px}
+
+/* ══════════════════════════════════════════════
+   CLOUD SAVE STATUS
+══════════════════════════════════════════════ */
+.cloud-status{display:flex;align-items:center;gap:6px;font-size:10px;padding:5px 10px;border-radius:20px;background:rgba(255,255,255,.07);cursor:pointer}
+.cloud-ok{color:var(--gt)}.cloud-sync{color:var(--at)}.cloud-err{color:var(--rt)}
+
+/* ══════════════════════════════════════════════
+   TOPBAR ONLINE
+══════════════════════════════════════════════ */
+#topbar{background:rgba(15,30,10,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border2);padding:8px 12px;flex-shrink:0;display:flex;align-items:center;gap:8px;position:relative;z-index:10}
+.logo{font-size:14px;font-weight:900;color:var(--gt);letter-spacing:.06em;white-space:nowrap;flex-shrink:0;text-shadow:0 0 14px rgba(110,255,58,.3)}
+.logo img,.auth-logo img{display:block}
+.logo em{color:var(--at);font-style:normal}
+#hud-row{display:flex;gap:5px;flex:1;overflow-x:auto;scrollbar-width:none}
+#hud-row::-webkit-scrollbar{display:none}
+.hc{background:rgba(255,255,255,.07);border:0.5px solid var(--border);border-radius:8px;padding:5px 9px;text-align:center;flex-shrink:0;min-width:58px;transition:all .2s}
+.hc-v{font-size:12px;font-weight:800;line-height:1.2;white-space:nowrap}
+.hc-l{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.topbar-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
+
+/* ══════════════════════════════════════════════
+   WEATHER / CONTENT / BNAV
+══════════════════════════════════════════════ */
+#wstrip{padding:5px 14px;background:rgba(5,14,4,.75);backdrop-filter:blur(12px);border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px;font-size:12px;flex-shrink:0;overflow-x:auto;scrollbar-width:none;z-index:9;position:relative}
+#wstrip::-webkit-scrollbar{display:none}
+.spill{font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,.08);color:var(--text2);white-space:nowrap;flex-shrink:0;margin-left:auto}
+#content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:10px 10px calc(70px + var(--sb));position:relative;z-index:1}
+#bnav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(15,30,10,.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid var(--border2);display:flex;padding-bottom:var(--sb)}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 2px 8px;cursor:pointer;color:var(--text3);font-size:9px;letter-spacing:.03em;text-transform:uppercase;border:none;background:transparent;transition:all .2s;position:relative}
+.bn.on{color:var(--gt);text-shadow:0 0 10px var(--gt)}
+.bn::before{content:'';width:28px;height:28px;background-image:url('menu-icons.png');background-repeat:no-repeat;background-size:400% 100%;opacity:.82;filter:sepia(.16) saturate(1.08) contrast(1.05);transition:transform .2s,filter .2s,opacity .2s}
+.bn.on::before{opacity:1;filter:sepia(.05) saturate(1.12) contrast(1.12) drop-shadow(0 0 6px rgba(212,160,64,.32));transform:translateY(-1px)}
+.bn svg{display:none}
+#bn-farm::before{background-position:0 0}
+#bn-mkt::before{background-position:33.333% 0}
+#bn-social::before{background-position:66.666% 0}
+#bn-rank::before{background-position:100% 0}
+
+/* ══════════════════════════════════════════════
+   GAME PANELS
+══════════════════════════════════════════════ */
+.panel{display:none}.panel.on{display:block}
+.card{background:rgba(10,20,8,.72);backdrop-filter:blur(16px);border:0.5px solid var(--border);border-radius:18px;padding:14px;margin-bottom:10px;overflow:hidden;position:relative}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(110,255,58,.2),transparent)}
+.card-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+button{font-family:var(--font);font-size:13px;padding:10px 14px;border:0.5px solid var(--border2);border-radius:12px;background:rgba(255,255,255,.07);color:var(--text);cursor:pointer;transition:all .18s;touch-action:manipulation;backdrop-filter:blur(8px)}
+button:hover{background:rgba(255,255,255,.12)}
+button:active{transform:scale(.94)}
+button:disabled{opacity:.3;pointer-events:none}
+.bf{width:100%;padding:12px;font-size:13px;font-weight:700}
+.bp{background:linear-gradient(135deg,#d4a040,#8b4513);border-color:rgba(212,160,64,.75);color:#fff6df;box-shadow:inset 0 1px 0 rgba(255,240,210,.25),0 10px 22px rgba(80,42,16,.22)}
+.bp:hover{background:linear-gradient(135deg,#deaf4f,#95501b)}
+.bb{background:rgba(24,112,208,.2);border-color:var(--blue);color:var(--bt)}
+.ba{background:rgba(208,128,0,.2);border-color:var(--amber);color:var(--at)}
+.br{background:rgba(224,48,48,.2);border-color:var(--red);color:var(--rt)}
+.bu{background:rgba(112,64,208,.2);border-color:var(--purple);color:var(--put)}
+.bg2{background:rgba(200,144,0,.2);border-color:var(--gold);color:var(--got)}
+.bt2{background:rgba(16,160,128,.2);border-color:var(--teal);color:var(--tt)}
+.ar{display:grid;gap:8px;margin-bottom:10px}
+.ar3{grid-template-columns:repeat(3,1fr)}.ar2{grid-template-columns:repeat(2,1fr)}.ar4{grid-template-columns:repeat(4,1fr)}
+.chip{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;display:inline-block;white-space:nowrap}
+.cok{background:rgba(62,207,24,.2);color:var(--gt);border:0.5px solid rgba(62,207,24,.3)}
+.cw{background:rgba(208,128,0,.2);color:var(--at);border:0.5px solid rgba(208,128,0,.3)}
+.ce{background:rgba(224,48,48,.2);color:var(--rt);border:0.5px solid rgba(224,48,48,.3)}
+.cb{background:rgba(24,112,208,.2);color:var(--bt);border:0.5px solid rgba(24,112,208,.3)}
+.cpu{background:rgba(112,64,208,.2);color:var(--put);border:0.5px solid rgba(112,64,208,.3)}
+.ct{background:rgba(16,160,128,.2);color:var(--tt);border:0.5px solid rgba(16,160,128,.3)}
+.cgo{background:rgba(200,144,0,.2);color:var(--got);border:0.5px solid rgba(200,144,0,.3)}
+.mg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px}
+.mg3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+.mg4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.mc{background:rgba(255,255,255,.06);border:0.5px solid var(--border);border-radius:var(--r);padding:10px 12px;backdrop-filter:blur(8px)}
+.mc-l{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.mc-v{font-size:18px;font-weight:800;line-height:1.2}
+.mc-s{font-size:11px;color:var(--text2);margin-top:2px}
+.pw{height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
+.pf{height:100%;border-radius:3px;transition:width .4s}
+.cvg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+@media(min-width:420px){.cvg{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:600px){.cvg{grid-template-columns:repeat(5,1fr)}}
+.cwc{border-radius:18px;border:1px solid rgba(255,255,255,.1);cursor:pointer;overflow:hidden;position:relative;transition:all .2s;background:rgba(0,0,0,.3);aspect-ratio:.85}
+.cwc:active{transform:scale(.93)}
+.cwc.sel{border-color:var(--green);box-shadow:0 0 0 2px var(--green),0 4px 20px rgba(62,207,24,.3)}
+.cwc.sick{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
+.cwc.preg{border-color:var(--purple)}
+.cwc-photo{position:absolute;inset:0;width:100%;height:100%;overflow:hidden}
+.cwc-photo img{object-fit:cover;width:100%;height:100%;filter:contrast(1.05) saturate(1.1)}
+.cwc-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.85) 0%,rgba(0,0,0,.1) 55%,transparent 100%)}
+.cwc-info{position:absolute;bottom:0;left:0;right:0;padding:6px 5px 5px}
+.cwc-name{font-size:9px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+.cwc-kg{font-size:10px;color:rgba(255,255,255,.75);font-weight:600}
+.cwc-bar{height:3px;background:rgba(255,255,255,.2);border-radius:2px;margin-top:2px}
+.cwc-fill{height:100%;border-radius:2px}
+.cwc-dots{position:absolute;top:4px;right:4px;display:flex;flex-direction:column;gap:3px}
+.cwc-dot{width:8px;height:8px;border-radius:50%;border:1px solid rgba(255,255,255,.3)}
+.cwc-phase{position:absolute;top:4px;left:4px}
+.cwc-phase .chip{font-size:8px;padding:2px 5px}
+.sick-overlay{position:absolute;inset:0;background:rgba(200,0,0,.2);animation:pulse-red 1.5s infinite}
+@keyframes pulse-red{0%,100%{opacity:.3}50%{opacity:.7}}
+.phbar{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:12px}
+.phb{background:rgba(255,255,255,.06);border:0.5px solid var(--border);border-radius:var(--r);padding:8px 4px;text-align:center;cursor:pointer;transition:all .2s}
+.phb-n{font-size:17px;font-weight:800;display:block;line-height:1.2}
+.phb-l{font-size:9px;color:var(--text2);margin-top:1px}
+.pqg{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+@media(min-width:480px){.pqg{grid-template-columns:repeat(4,1fr)}}
+.pq{border-radius:var(--r);border:1px solid rgba(255,255,255,.12);cursor:pointer;overflow:hidden;position:relative;aspect-ratio:1.1;transition:all .2s}
+.pq:active{transform:scale(.93)}
+.pq.sel{border-color:var(--green);box-shadow:0 0 0 2px var(--green)}
+.pq-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pq-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.75) 0%,rgba(0,0,0,.1) 60%)}
+.pq-info{position:absolute;bottom:0;left:0;right:0;padding:6px;text-align:center}
+.pq-name{font-size:9px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8)}
+.pq-h{font-size:10px;color:rgba(255,255,255,.7);font-weight:600}
+.pq-rest{position:absolute;top:4px;right:4px;font-size:14px}
+.pq-health-bar{position:absolute;bottom:0;left:0;height:4px;border-radius:0 0 0 var(--r)}
+#dsheet{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(8,18,6,.97);backdrop-filter:blur(30px);border-top:1px solid var(--border2);border-radius:20px 20px 0 0;padding:16px 16px calc(16px + var(--sb));transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);max-height:90vh;overflow-y:auto}
+#dsheet.open{transform:translateY(0)}
+.sh{width:44px;height:5px;background:var(--border2);border-radius:3px;margin:0 auto 16px}
+#dback{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:199;display:none;backdrop-filter:blur(4px)}
+#dback.on{display:block}
+.animal-hero{width:100%;height:200px;border-radius:18px;margin-bottom:14px;position:relative;overflow:hidden}
+.animal-hero img{object-fit:cover;width:100%;height:100%;filter:contrast(1.05) saturate(1.1)}
+.animal-hero-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.85) 0%,transparent 50%);border-radius:18px}
+.animal-hero-info{position:absolute;bottom:12px;left:14px;right:14px}
+.dr{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid rgba(255,255,255,.08)}
+.dr:last-child{border-bottom:none}
+.drl{color:var(--text2);font-size:12px}
+.li{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.06);border:0.5px solid var(--border);border-radius:var(--r);margin-bottom:7px}
+.li-info{flex:1;min-width:0}.li-n{font-weight:700;font-size:13px}.li-s{font-size:11px;color:var(--text2);margin-top:2px}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+@media(min-width:600px){.sg{grid-template-columns:repeat(3,1fr)}}
+.sc{background:rgba(10,20,8,.72);border:0.5px solid var(--border);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
+.sc-photo{object-fit:cover;width:100%;height:110px;flex-shrink:0;filter:contrast(1.05) saturate(1.1)}
+.sc-body{padding:10px 12px;flex:1;display:flex;flex-direction:column}
+.sc-n{font-weight:800;font-size:13px;margin-bottom:3px}
+.sc-d{font-size:11px;color:var(--text2);margin-bottom:6px;line-height:1.4;flex:1}
+.sc-p{font-size:13px;color:var(--at);font-weight:800;margin-bottom:7px}
+.breed-info-bar{background:rgba(62,207,24,.1);border-bottom:0.5px solid rgba(62,207,24,.2);padding:5px 10px;font-size:10px;color:var(--gt);display:flex;align-items:center;gap:5px}
+.snav{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:9px;margin-bottom:9px;border-bottom:0.5px solid var(--border)}
+.snav::-webkit-scrollbar{display:none}
+.snb{font-size:12px;padding:6px 14px;border-radius:20px;white-space:nowrap;border:0.5px solid var(--border2);background:rgba(255,255,255,.06);color:var(--text2);cursor:pointer;flex-shrink:0;transition:all .15s;backdrop-filter:blur(6px)}
+.snb.on{background:rgba(62,207,24,.2);color:var(--gt);border-color:var(--green)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:7px 8px;color:var(--text3);font-weight:400;border-bottom:0.5px solid rgba(255,255,255,.1);font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:7px 8px;border-bottom:0.5px solid rgba(255,255,255,.06)}
+.tr{text-align:right}
+.mi{display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,.06);border-radius:var(--r);margin-bottom:6px;border:0.5px solid var(--border);position:relative;overflow:hidden}
+.mi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px 0 0 2px}
+.mi.up::before{background:var(--green)}.mi.dn::before{background:var(--red)}
+.aui{background:rgba(200,144,0,.08);border:1px solid rgba(200,144,0,.3);border-radius:18px;padding:0;margin-bottom:10px;overflow:hidden}
+.aui-photo{width:100%;height:140px;object-fit:cover}
+.aui-body{padding:12px}
+#toast{position:fixed;top:82px;left:50%;transform:translateX(-50%) translateY(-16px);opacity:0;padding:10px 22px;border-radius:26px;font-size:13px;font-weight:700;z-index:500;transition:all .25s;pointer-events:none;white-space:nowrap;max-width:88vw;backdrop-filter:blur(12px)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.tok{background:rgba(62,207,24,.9);color:#050e04;box-shadow:0 4px 20px rgba(62,207,24,.4)}
+#toast.terr{background:rgba(224,48,48,.9);color:#fff;box-shadow:0 4px 20px rgba(224,48,48,.4)}
+#toast.twarn{background:rgba(208,128,0,.9);color:#050e04;box-shadow:0 4px 20px rgba(208,128,0,.4)}
+#toast.tgold{background:rgba(200,144,0,.9);color:#050e04;box-shadow:0 4px 20px rgba(200,144,0,.5)}
+#evbanner{display:none;padding:10px 14px;background:rgba(200,144,0,.15);border:1px solid rgba(200,144,0,.4);border-radius:var(--r);margin-bottom:10px;font-size:12px;color:var(--got);backdrop-filter:blur(8px)}
+#evbanner.show{display:flex;align-items:center;gap:8px}
+#moresheet{position:fixed;bottom:0;left:0;right:0;z-index:250;background:rgba(8,18,6,.97);backdrop-filter:blur(28px);border-top:1px solid var(--border2);border-radius:20px 20px 0 0;padding:16px;padding-bottom:calc(16px + var(--sb));transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
+#moreback{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:249;display:none}
+#ppopback{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:399;display:none;backdrop-filter:blur(4px)}
+#ppopback.on{display:block}
+.loan{background:rgba(255,255,255,.06);border-radius:var(--r);padding:10px 12px;margin-bottom:7px;border:0.5px solid var(--border)}
+.mss{background:rgba(255,255,255,.06);border-radius:var(--r);padding:12px;margin-bottom:7px;border:0.5px solid var(--border)}
+.mss.done{opacity:.5;border-color:var(--green)}
+.fair-card{border-radius:18px;overflow:hidden;position:relative;margin-bottom:10px}
+.fair-photo{width:100%;height:150px;object-fit:cover}
+.fair-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.9) 0%,rgba(0,0,0,.2) 60%)}
+.fair-content{position:absolute;bottom:0;left:0;right:0;padding:14px}
+.rnk{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.06);border-radius:var(--r);margin-bottom:6px;border:0.5px solid var(--border)}
+.lbox{max-height:140px;overflow-y:auto;font-size:11px;color:var(--text2);line-height:1.9}
+.ll{border-bottom:0.5px solid rgba(255,255,255,.06);padding:2px 0}
+.ll.alert{color:var(--rt)}.ll.good{color:var(--gt)}.ll.info{color:var(--bt)}.ll.gold{color:var(--got)}
+footer{text-align:center;font-size:10px;color:var(--text3);padding:12px;margin-bottom:60px}
+.season-prog{height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:3px;overflow:hidden}
+.season-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--teal));border-radius:2px;transition:width .4s}
+
+/* ══════════════════════════════════════════════
+   NOVOS SISTEMAS ONLINE — ESTILOS ADICIONAIS
+══════════════════════════════════════════════ */
+
+/* NOTIFICAÇÕES PUSH */
+#notif-bell{position:relative;cursor:pointer;padding:4px}
+.notif-badge{position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;font-size:8px;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;font-weight:700}
+#notif-panel{position:fixed;top:56px;right:8px;width:300px;max-width:92vw;background:rgba(10,22,8,.97);backdrop-filter:blur(28px);border:1px solid var(--border2);border-radius:16px;z-index:600;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.7);transform:scale(.9) translateY(-10px);opacity:0;pointer-events:none;transition:all .2s}
+#notif-panel.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+.notif-header{padding:12px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:13px}
+.notif-item{padding:11px 14px;border-bottom:0.5px solid rgba(255,255,255,.06);display:flex;gap:10px;align-items:flex-start;cursor:pointer;transition:background .15s}
+.notif-item:hover{background:rgba(255,255,255,.05)}
+.notif-item.unread{background:rgba(62,207,24,.06)}
+.notif-icon{font-size:22px;flex-shrink:0;margin-top:1px}
+.notif-body-n{font-size:12px;font-weight:700;margin-bottom:2px}
+.notif-body-s{font-size:11px;color:var(--text2);line-height:1.4}
+.notif-time{font-size:10px;color:var(--text3);margin-top:3px}
+.notif-empty{padding:24px;text-align:center;color:var(--text3);font-size:12px}
+
+/* CONQUISTAS / ACHIEVEMENTS */
+#achievement-popup{position:fixed;top:76px;left:50%;transform:translateX(-50%) translateY(-80px);opacity:0;pointer-events:none;z-index:700;transition:all .4s cubic-bezier(.32,.72,0,1);min-width:280px}
+#achievement-popup.show{transform:translateX(-50%) translateY(0);opacity:1}
+.achiev-card{background:linear-gradient(135deg,rgba(200,144,0,.25),rgba(100,64,0,.3));backdrop-filter:blur(20px);border:1px solid var(--gold);border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 8px 32px rgba(200,144,0,.4)}
+.achiev-icon{font-size:36px;flex-shrink:0;animation:achiev-bounce .6s ease}
+@keyframes achiev-bounce{0%{transform:scale(0)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+.achiev-title{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--got);margin-bottom:3px}
+.achiev-name{font-size:15px;font-weight:900;color:#fff}
+.achiev-desc{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px}
+.achiev-shine{position:absolute;inset:0;border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 50%);pointer-events:none}
+
+/* RANKING TEMPORADAS */
+.season-badge{background:linear-gradient(135deg,rgba(200,144,0,.3),rgba(112,64,208,.2));border:0.5px solid var(--gold);border-radius:10px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--got);display:flex;align-items:center;gap:5px}
+.rank-tab-row{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;margin-bottom:10px;padding-bottom:2px}
+.rank-tab-row::-webkit-scrollbar{display:none}
+.rktab{font-size:11px;padding:6px 12px;border-radius:20px;border:0.5px solid var(--border2);background:rgba(255,255,255,.06);color:var(--text2);cursor:pointer;flex-shrink:0;white-space:nowrap;transition:all .15s}
+.rktab.on{background:rgba(200,144,0,.2);color:var(--got);border-color:var(--gold)}
+
+/* SISTEMA DE AMIGOS */
+
+/* ── SISTEMA DE AMIZADE COMPLETO ── */
+.friend-card{display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,.06);border-radius:var(--rl);margin-bottom:8px;border:0.5px solid var(--border);transition:all .2s;position:relative;overflow:hidden}
+.friend-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px 0 0 2px;background:var(--text3);transition:background .2s}
+.friend-card.online::before{background:var(--green)}
+.friend-status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;border:1.5px solid rgba(0,0,0,.3)}
+.friend-online{background:var(--green);box-shadow:0 0 7px rgba(110,255,58,.6);animation:pulse-dot 2s infinite}
+.friend-offline{background:var(--text3)}
+.friend-away{background:var(--amber);box-shadow:0 0 5px rgba(255,176,32,.4)}
+.friend-actions{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.friend-actions button{font-size:10px;padding:5px 10px;border-radius:10px}
+/* FRIEND INVITE SHEET */
+#friend-invite-sheet{position:fixed;bottom:0;left:0;right:0;z-index:350;background:rgba(8,18,6,.97);backdrop-filter:blur(32px);border-top:1px solid var(--border2);border-radius:20px 20px 0 0;padding:18px;padding-bottom:calc(18px + var(--sb));transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);max-height:80vh;overflow-y:auto}
+#friend-invite-sheet.open{transform:translateY(0)}
+#friend-invite-back{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:349;display:none;backdrop-filter:blur(4px)}
+/* FRIEND PROFILE MINI */
+.fp-mini{background:rgba(255,255,255,.05);border-radius:var(--rl);padding:12px;margin-bottom:8px;border:0.5px solid var(--border)}
+.fp-mini-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+/* PEDIDOS DE AMIZADE */
+.friend-req{display:flex;align-items:center;gap:10px;padding:12px;background:rgba(62,207,24,.08);border-radius:var(--r);margin-bottom:7px;border:0.5px solid rgba(62,207,24,.25);animation:glow-in .4s}
+@keyframes glow-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+/* FRIEND SEARCH */
+.friend-search-box{display:flex;gap:8px;margin-bottom:14px}
+.friend-search-input{flex:1;padding:11px 14px;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:var(--font);font-size:14px;outline:none}
+.friend-search-input:focus{border-color:var(--green);background:rgba(62,207,24,.06)}
+/* VISITAR FAZENDA */
+.visit-badge{background:rgba(62,207,24,.12);border:0.5px solid rgba(62,207,24,.3);border-radius:var(--r);padding:8px 12px;margin-bottom:8px;font-size:11px;color:var(--gt);display:flex;align-items:center;gap:6px}
+/* FRIEND RANKING */
+.friend-rank-pos{font-size:22px;font-weight:900;width:36px;text-align:center}
+/* NOTIF PEDIDO */
+.req-notif{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(80px);opacity:0;pointer-events:none;z-index:800;transition:all .35s cubic-bezier(.32,.72,0,1);min-width:260px}
+.req-notif.show{transform:translateX(-50%) translateY(0);opacity:1}
+.req-notif-card{background:rgba(24,112,208,.95);backdrop-filter:blur(20px);border:1px solid var(--blue);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(24,112,208,.5)}
+
+/* PERFIL COMPLETO */
+.profile-prog-bar{height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-top:4px}
+.profile-prog-fill{height:100%;border-radius:3px}
+.profile-tab-row{display:flex;gap:5px;margin-bottom:14px;background:rgba(255,255,255,.05);border-radius:12px;padding:4px}
+.profile-tab{flex:1;padding:8px;text-align:center;font-size:12px;font-weight:600;border-radius:9px;cursor:pointer;transition:all .2s;color:var(--text3)}
+.profile-tab.on{background:rgba(62,207,24,.2);color:var(--gt)}
+
+/* ADMIN PAINEL */
+#admin-panel{position:fixed;inset:0;z-index:900;background:rgba(5,14,4,.98);backdrop-filter:blur(40px);display:none;flex-direction:column}
+#admin-panel.open{display:flex}
+.admin-header{background:rgba(200,144,0,.15);border-bottom:1px solid var(--gold);padding:14px 16px;display:flex;align-items:center;gap:10px}
+.admin-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.05);border-radius:var(--r);margin-bottom:6px;border:0.5px solid var(--border)}
+.admin-stat{text-align:center;flex:1;padding:10px;background:rgba(255,255,255,.06);border-radius:var(--r)}
+.admin-stat-v{font-size:20px;font-weight:900;display:block}
+.admin-stat-l{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+
+/* SERVER STATUS BAR */
+#server-bar{background:rgba(62,207,24,.1);border-bottom:0.5px solid rgba(62,207,24,.2);padding:5px 14px;font-size:11px;display:none;align-items:center;gap:8px;color:var(--gt)}
+#server-bar.show{display:flex}
+
+/* COMPARAR FAZENDA */
+.compare-card{background:rgba(255,255,255,.06);border-radius:var(--rl);padding:12px;border:0.5px solid var(--border)}
+.compare-row{display:flex;align-items:center;margin-bottom:8px}
+.compare-label{flex:1;font-size:11px;color:var(--text2)}
+.compare-val{font-size:13px;font-weight:700;min-width:70px;text-align:right}
+.compare-bar-w{flex:1;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;margin:0 8px}
+.compare-bar-f{height:100%;border-radius:2px;transition:width .4s}
+
+/* TEMPORADA TIMER */
+.season-timer{background:rgba(200,144,0,.12);border:0.5px solid rgba(200,144,0,.3);border-radius:var(--r);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.season-timer-val{font-size:18px;font-weight:900;color:var(--got);font-variant-numeric:tabular-nums}
+
+/* CHAT / FEED */
+.feed-item{padding:10px 12px;background:rgba(255,255,255,.06);border-radius:var(--r);margin-bottom:6px;border:0.5px solid var(--border);font-size:12px}
+.feed-item .feed-user{font-weight:700;color:var(--gt)}
+.feed-item .feed-time{color:var(--text3);font-size:10px;float:right}
+
+/* NIVEL PROGRESS */
+.xp-bar-container{background:rgba(255,255,255,.08);border-radius:10px;height:10px;overflow:hidden;margin:6px 0;position:relative}
+.xp-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--green),var(--teal));transition:width .6s cubic-bezier(.32,.72,0,1)}
+.xp-bar-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:rgba(255,255,255,.8)}
+
+/* ONLINE PULSE */
+.pulse-live{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--gt)}
+.pulse-live::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 var(--gt);animation:live-pulse 1.5s infinite}
+@keyframes live-pulse{0%{box-shadow:0 0 0 0 rgba(110,255,58,.6)}70%{box-shadow:0 0 0 8px rgba(110,255,58,0)}100%{box-shadow:0 0 0 0 rgba(110,255,58,0)}}
+
+</style>
+
+</head>
+<body>
+<div id="splash-screen" style="position:fixed;inset:0;z-index:9999;background:#050e04;display:flex;align-items:center;justify-content:center;transition:opacity 1s;">
+  <img src="splash.png" alt="Pecuaria Sim" style="width:min(88vw,520px);height:auto;display:block;">
+</div>
+
+<!-- ── BG LAYER ── -->
+<div id="bg-layer">
+<img id="bg-main" src="main-bg.png" alt="Fazenda">
+</div>
+
+<!-- ══════════════════════════════════════════
+     AUTH SCREEN
+══════════════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-hero">
+<img class="auth-hero-img" src="main-bg.png" alt="">
+      <div class="auth-hero-overlay"></div>
+      <div class="auth-logo">
+        <img src="logo.png" alt="Pecuaria Sim" style="width:180px;max-width:100%;height:auto;">
+      </div>
+    </div>
+    <div class="auth-body">
+      <div class="auth-tabs">
+        <div class="auth-tab on" id="atab-login" onclick="authSwitchTab('login')">Entrar</div>
+        <div class="auth-tab" id="atab-register" onclick="authSwitchTab('register')">Cadastrar</div>
+        <div class="auth-tab" id="atab-recover" onclick="authSwitchTab('recover')">Recuperar</div>
+      </div>
+
+      <!-- Login -->
+      <div id="form-login" class="auth-form">
+        <div class="inp-wrap">
+          <span class="inp-icon">👤</span>
+          <input id="li-user" class="auth-input" type="text" placeholder="Usuário ou e-mail" autocomplete="username">
+        </div>
+        <div class="inp-wrap">
+          <span class="inp-icon">🔒</span>
+          <input id="li-pass" class="auth-input" type="password" placeholder="Senha" autocomplete="current-password">
+        </div>
+        <label class="remember-row"><input type="checkbox" id="li-remember"> Lembrar-me</label>
+        <div class="auth-error" id="auth-err-login"></div>
+        <div class="auth-success" id="auth-ok-login"></div>
+        <button class="auth-btn" onclick="doLogin()">🚀 ENTRAR NA FAZENDA</button>
+        <div class="auth-divider">Ainda não tem conta?</div>
+        <div class="auth-link" onclick="authSwitchTab('register')">Criar conta grátis →</div>
+      </div>
+
+      <!-- Register -->
+      <div id="form-register" class="auth-form" style="display:none">
+        <div class="inp-wrap">
+          <span class="inp-icon">🏠</span>
+          <input id="ca-farm" class="auth-input" type="text" placeholder="Nome da sua fazenda" maxlength="50">
+        </div>
+        <div class="inp-wrap">
+          <span class="inp-icon">👤</span>
+          <input id="ca-user" class="auth-input" type="text" placeholder="Nome de usuário (mín. 3 chars)" maxlength="30">
+        </div>
+        <div class="inp-wrap">
+          <span class="inp-icon">📧</span>
+          <input id="ca-email" class="auth-input" type="email" placeholder="E-mail" autocomplete="email">
+        </div>
+        <div class="inp-wrap">
+          <span class="inp-icon">🔒</span>
+          <input id="ca-pass" class="auth-input" type="password" placeholder="Senha (mín. 6 chars)" autocomplete="new-password">
+        </div>
+        <div class="inp-wrap">
+          <span class="inp-icon">🗺️</span>
+          <select id="ca-region" class="auth-input" style="padding-left:38px;background:rgba(255,255,255,.07)">
+            <option value="BR">🇧🇷 Brasil (geral)</option>
+            <option value="SP">São Paulo</option>
+            <option value="MG">Minas Gerais</option>
+            <option value="GO">Goiás</option>
+            <option value="MS">Mato Grosso do Sul</option>
+            <option value="MT">Mato Grosso</option>
+            <option value="BA">Bahia</option>
+            <option value="RS">Rio Grande do Sul</option>
+            <option value="PR">Paraná</option>
+            <option value="RJ">Rio de Janeiro</option>
+          </select>
+        </div>
+        <div class="auth-error" id="auth-err-register"></div>
+        <div class="auth-success" id="auth-ok-register"></div>
+        <button class="auth-btn" onclick="doRegister()">🌱 CRIAR MINHA FAZENDA</button>
+      </div>
+
+      <!-- Recover -->
+      <div id="form-recover" class="auth-form" style="display:none">
+        <div class="inp-wrap">
+          <span class="inp-icon">📧</span>
+          <input id="rc-email" class="auth-input" type="email" placeholder="Seu e-mail cadastrado">
+        </div>
+        <div class="auth-error" id="auth-err-recover"></div>
+        <div class="auth-success" id="auth-ok-recover"></div>
+        <button class="auth-btn" onclick="doRecover()">📬 ENVIAR RECUPERAÇÃO</button>
+        <div class="auth-link" onclick="authSwitchTab('login')" style="margin-top:8px">← Voltar ao login</div>
+      </div>
+    </div>
+    <div class="auth-footer">Pecuária Sim © 2025 · Dados salvos local ou Firebase Cloud</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN SHELL (hidden until logged in)
+══════════════════════════════════════════════ -->
+<div id="shell" style="display:none;flex-direction:column;position:fixed;inset:0;z-index:2;overflow:hidden">
+
+  <!-- Server bar -->
+  <div id="server-bar">
+    <span class="online-dot"></span>
+    <span>Servidor online</span>
+    <span style="margin-left:auto;opacity:.6;font-size:10px" id="srv-mode">local</span>
+  </div>
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="logo"><img src="logo.png" alt="Pecuaria Sim" style="height:32px; vertical-align:middle;"></div>
+    <div id="hud-row">
+      <div class="hc">
+        <div class="hc-v" id="hud-money" style="color:var(--gt)">R$15k</div>
+        <div class="hc-l">💰 Saldo</div>
+      </div>
+      <div class="hc">
+        <div class="hc-v" id="hud-day">1</div>
+        <div class="hc-l">📅 Dia</div>
+      </div>
+      <div class="hc">
+        <div class="hc-v" id="hud-cows">0</div>
+        <div class="hc-l">🐄 Gado</div>
+      </div>
+      <div class="hc">
+        <div class="hc-v" id="hud-milk" style="color:var(--bt)">0L</div>
+        <div class="hc-l">🥛 Leite</div>
+      </div>
+      <div class="hc">
+        <div class="hc-v" id="hud-level" style="color:var(--got)">Lv.1</div>
+        <div class="hc-l">⭐ Nível</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div id="notif-bell" onclick="toggleNotifPanel()" style="cursor:pointer;padding:4px;position:relative;font-size:20px">
+        🔔
+        <div class="notif-badge" id="notif-count" style="display:none">0</div>
+      </div>
+      <div id="cloud-status" class="cloud-status cloud-ok" onclick="manualCloudSave()" title="Salvar">
+        ☁️ <span id="cloud-txt">Salvo</span>
+      </div>
+      <div class="avatar-ring" id="topbar-avatar" onclick="openProfile()" style="cursor:pointer;font-size:17px" title="Perfil">
+        <span id="topbar-user-char">F</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- WEATHER / INFO STRIP -->
+  <div id="wstrip">
+    <span id="wx-icon">☀️</span>
+    <span id="wx-text" style="font-weight:600">Ensolarado</span>
+    <span id="wx-effect" style="color:var(--gt);font-size:11px">+5% produção</span>
+    <span class="spill" id="season-chip" style="color:var(--got);font-weight:700">🌞 Verão</span>
+    <span class="spill" id="wstrip-day">Dia 1</span>
+  </div>
+
+  <!-- EVENT BANNER -->
+  <div id="evbanner"></div>
+
+  <!-- CONTENT AREA -->
+  <div id="content">
+
+    <!-- ─────────────── PAINEL: FAZENDA ─────────────── -->
+    <div id="p-farm" class="panel on">
+
+      <div class="card">
+        <div class="card-title">
+          <span>🏠 Minha Fazenda</span>
+          <button class="bp" style="font-size:11px;padding:5px 12px" onclick="openBuySheet()">+ Comprar Animal</button>
+        </div>
+        <img src="farm-assets.png" alt="Ferramentas de gestao" style="width:100%;height:120px;object-fit:cover;border-radius:12px;display:block;margin-bottom:12px;">
+        <!-- Phase filter bar -->
+        <div class="phbar" id="phase-bar">
+          <div class="phb on" data-ph="all" onclick="filterPhase('all')">
+            <span class="phb-n" id="ph-all">0</span>
+            <div class="phb-l">Todos</div>
+          </div>
+          <div class="phb" data-ph="bezerro" onclick="filterPhase('bezerro')">
+            <span class="phb-n" id="ph-bez">0</span>
+            <div class="phb-l">Bezerro</div>
+          </div>
+          <div class="phb" data-ph="novilha" onclick="filterPhase('novilha')">
+            <span class="phb-n" id="ph-nov">0</span>
+            <div class="phb-l">Novilha</div>
+          </div>
+          <div class="phb" data-ph="vaca" onclick="filterPhase('vaca')">
+            <span class="phb-n" id="ph-vac">0</span>
+            <div class="phb-l">Vaca/Boi</div>
+          </div>
+          <div class="phb" data-ph="touro" onclick="filterPhase('touro')">
+            <span class="phb-n" id="ph-tou">0</span>
+            <div class="phb-l">Touro</div>
+          </div>
+        </div>
+        <div style="margin:0 0 12px">
+          <img src="fazenda-panel.png" alt="Mapa da fazenda" style="width:100%;border-radius:12px;display:block;">
+        </div>
+        <!-- Cow grid -->
+        <div class="cvg" id="cow-grid">
+          <div style="grid-column:1/-1;text-align:center;padding:32px 16px;color:var(--text3)">
+            <div style="font-size:48px;margin-bottom:10px">🌾</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text2)">Fazenda vazia</div>
+            <div style="font-size:11px;margin-top:6px">Vá ao <strong style="color:var(--gt)">Mercado</strong> e compre seu primeiro animal!</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Farm stats -->
+      <div class="card">
+        <div class="card-title">📊 Resumo da Produção</div>
+        <div class="mg">
+          <div class="mc">
+            <div class="mc-l">Leite/dia</div>
+            <div class="mc-v" id="stat-milk-day" style="color:var(--bt)">0L</div>
+            <div class="mc-s">Estoque: <span id="stat-milk-stock" style="color:var(--bt)">0</span>L</div>
+          </div>
+          <div class="mc">
+            <div class="mc-l">Custo/dia</div>
+            <div class="mc-v" id="stat-cost" style="color:var(--rt)">R$0</div>
+            <div class="mc-s">Ração + Saúde</div>
+          </div>
+          <div class="mc">
+            <div class="mc-l">Peso médio</div>
+            <div class="mc-v" id="stat-weight">0 kg</div>
+            <div class="mc-s">Do rebanho</div>
+          </div>
+          <div class="mc">
+            <div class="mc-l">Genética</div>
+            <div class="mc-v" id="stat-gen" style="color:var(--put)">0 pts</div>
+            <div class="mc-s">Média do plantel</div>
+          </div>
+        </div>
+        <!-- XP bar -->
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:3px">
+            <span>⭐ Nível <span id="xp-level">1</span></span>
+            <span id="xp-label">0 / 1000 XP</span>
+          </div>
+          <div class="xp-bar-container">
+            <div class="xp-bar-fill" id="xp-bar" style="width:0%"></div>
+            <div class="xp-bar-label" id="xp-pct">0%</div>
+          </div>
+        </div>
+
+        <div class="ar3" style="gap:6px">
+          <button class="bp bf" onclick="nextDayUI()">⏭ Próximo Dia</button>
+          <button class="bb bf" onclick="sellMilkUI()">🥛 Vender Leite</button>
+          <button class="ba bf" onclick="buyVaccineUI()">💉 Vacinar</button>
+        </div>
+      </div>
+
+      <!-- Farm log -->
+      <div class="card">
+        <div class="card-title">
+          <span>📋 Diário da Fazenda</span>
+          <span style="font-size:10px;color:var(--bt);cursor:pointer" onclick="document.getElementById('farm-log').innerHTML=''">limpar</span>
+        </div>
+        <div class="lbox" id="farm-log">
+          <div class="ll info">🌅 Bem-vindo ao Pecuária Sim! Sua jornada começa aqui.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────────── PAINEL: MERCADO ─────────────── -->
+    <div id="p-mkt" class="panel">
+
+      <div class="card">
+        <div class="mkt-live-header">
+          <span style="font-size:15px;font-weight:800">📈 Mercado ao Vivo</span>
+          <span class="live-badge">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--rt);display:inline-block;animation:pulse-dot 1s infinite"></span>
+            AO VIVO
+          </span>
+        </div>
+        <div id="mprices-live"></div>
+        <div class="mkt-ai-note">💡 Preços flutuam a cada minuto — compre na baixa e venda na alta!</div>
+      </div>
+
+      <!-- Shop sub-nav -->
+      <div class="snav" id="shop-nav">
+        <div class="snb on" data-tab="animais" onclick="switchShopTab('animais')">🐄 Animais</div>
+        <div class="snb" data-tab="insumos" onclick="switchShopTab('insumos')">🌾 Insumos</div>
+        <div class="snb" data-tab="genetica" onclick="switchShopTab('genetica')">🧬 Genética</div>
+        <div class="snb" data-tab="historico" onclick="switchShopTab('historico')">📊 Histórico</div>
+      </div>
+
+      <div id="shop-animais">
+        <img src="rebanho-panel.png" alt="Rebanho de elite" style="width:100%;border-radius:12px;display:block;margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px;font-weight:600">🐮 Escolha uma raça para comprar:</div>
+        <div class="sg" id="breed-grid"></div>
+      </div>
+
+      <div id="shop-insumos" style="display:none">
+        <img src="market-assets.png" alt="Mercado de insumos" style="width:100%;height:120px;object-fit:cover;border-radius:12px;display:block;margin-bottom:12px;">
+        <div class="card">
+          <div class="card-title">🌾 Insumos &amp; Saúde Animal</div>
+          <div class="mg">
+            <div class="mc">
+              <div class="mc-l">💉 Vacina Aftosa</div>
+              <div class="mc-v" style="color:var(--bt)" id="shop-vac-p">R$45</div>
+              <div class="mc-s">Por animal • proteção 6 meses</div>
+              <button class="bb bf" style="margin-top:8px;font-size:12px" onclick="buyVaccineUI()">Vacinar Rebanho</button>
+            </div>
+            <div class="mc">
+              <div class="mc-l">🌾 Ração Premium</div>
+              <div class="mc-v" style="color:var(--at)" id="shop-feed-p">R$8/kg</div>
+              <div class="mc-s">+25% ganho de peso por 30d</div>
+              <button class="ba bf" style="margin-top:8px;font-size:12px" onclick="buyFeed()">Comprar</button>
+            </div>
+            <div class="mc">
+              <div class="mc-l">🧑‍⚕️ Veterinário</div>
+              <div class="mc-v" style="color:var(--rt)">R$200</div>
+              <div class="mc-s">Cura 1 animal doente</div>
+              <button class="br bf" style="margin-top:8px;font-size:12px" onclick="callVet()">Chamar Vet.</button>
+            </div>
+            <div class="mc">
+              <div class="mc-l">💊 Vitaminas</div>
+              <div class="mc-v" style="color:var(--gt)">R$30</div>
+              <div class="mc-s">+10% saúde geral 15d</div>
+              <button class="bp bf" style="margin-top:8px;font-size:12px" onclick="buyVitamins()">Comprar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="shop-genetica" style="display:none">
+        <div class="card">
+          <div class="card-title">🧬 Melhoramento Genético</div>
+          <div class="breed-info-bar">💡 Aumentar a genética melhora peso, leite e valor de revenda.</div>
+          <div style="margin-top:12px" id="genetics-list"></div>
+        </div>
+      </div>
+
+      <div id="shop-historico" style="display:none">
+        <div class="card">
+          <div class="card-title">📊 Histórico de Transações</div>
+          <div class="lbox" id="trade-log" style="max-height:300px">
+            <div class="ll info">Nenhuma transação registrada.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────────── PAINEL: SOCIAL ─────────────── -->
+    <div id="p-social" class="panel">
+      <div class="card">
+        <div class="card-title">
+          <span>🌎 Feed Global <span class="pulse-live" style="font-size:10px;margin-left:6px">Ao vivo</span></span>
+        </div>
+        <div id="global-feed">
+          <div class="feed-item">
+            <span class="feed-user">Sistema</span>: Bem-vindo ao Pecuária Sim! 🐄
+            <span class="feed-time">agora</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>👥 Meus Amigos <span class="chip cb" id="friends-count">0</span></span>
+          <button class="bp" style="font-size:11px;padding:5px 12px" onclick="openFriendInvite()">+ Adicionar</button>
+        </div>
+        <div id="friend-requests-section" style="display:none;margin-bottom:10px">
+          <div style="font-size:11px;color:var(--bt);font-weight:700;margin-bottom:6px">📬 Pedidos pendentes</div>
+          <div id="friend-requests-list"></div>
+        </div>
+        <div id="friends-list">
+          <div style="text-align:center;padding:24px;color:var(--text3);font-size:12px">
+            <div style="font-size:32px;margin-bottom:8px">🤝</div>
+            Nenhum amigo ainda.<br>Busque jogadores para conectar!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────────── PAINEL: RANKING ─────────────── -->
+    <div id="p-rank" class="panel">
+      <!-- Season card -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="season-badge" id="season-badge">🏆 Temporada 1</div>
+          <div style="font-size:11px;color:var(--text2)" id="season-ends">Encerra em 30 dias</div>
+        </div>
+        <div class="season-timer">
+          <div>
+            <div style="font-size:10px;color:var(--text2);margin-bottom:2px">Tempo restante</div>
+            <div class="season-timer-val" id="season-timer">29d 23h 59m</div>
+          </div>
+          <div class="season-badge" id="my-rank-badge" style="font-size:12px">🎖️ Ranqueando...</div>
+        </div>
+        <div class="season-prog" style="margin-top:8px">
+          <div class="season-fill" id="season-prog-fill" style="width:5%"></div>
+        </div>
+      </div>
+
+      <!-- Server status -->
+      <div class="server-info">
+        <span class="online-dot"></span>
+        <span id="online-count">Carregando ranking...</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--text3)" id="rank-updated">–</span>
+      </div>
+
+      <!-- Rank filter -->
+      <div class="rank-filter-row">
+        <div class="rfbtn on" onclick="setRankFilter('patrimonio')">💰 Patrimônio</div>
+        <div class="rfbtn" onclick="setRankFilter('rebanho')">🐄 Rebanho</div>
+        <div class="rfbtn" onclick="setRankFilter('leite')">🥛 Leite</div>
+        <div class="rfbtn" onclick="setRankFilter('vendas')">🤝 Vendas</div>
+        <div class="rfbtn" onclick="setRankFilter('genetica')">🧬 Genética</div>
+      </div>
+
+      <!-- Ranking list -->
+      <div id="ranking-list">
+        <div style="text-align:center;padding:24px;color:var(--text2)">
+          <div class="spinner" style="margin:0 auto 10px"></div>
+          Carregando ranking...
+        </div>
+      </div>
+      <button id="rank-load-more" class="bf bb" style="display:none;margin:8px 0" onclick="loadMoreRanking()">Carregar mais ↓</button>
+
+      <!-- My stats in ranking -->
+      <div class="card" style="margin-top:10px">
+        <div class="card-title">📊 Minhas Estatísticas Globais</div>
+        <div class="mg" id="rkstats"></div>
+      </div>
+
+      <!-- Friend ranking -->
+      <div class="card">
+        <div class="card-title">👥 Ranking entre Amigos</div>
+        <div id="friend-ranking-list">
+          <div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">
+            Adicione amigos para ver o ranking!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>Pecuária Sim v2.0 · Made with 🐄 in Brasil</footer>
+  </div><!-- /#content -->
+
+  <!-- BOTTOM NAV -->
+  <nav id="bnav">
+    <button class="bn on" id="bn-farm" onclick="switchPanel('farm')">Fazenda</button>
+    <button class="bn" id="bn-mkt" onclick="switchPanel('mkt')">Mercado</button>
+    <button class="bn" id="bn-social" onclick="switchPanel('social')">Social</button>
+    <button class="bn" id="bn-rank" onclick="switchPanel('rank')">Ranking</button>
+  </nav>
+</div><!-- /#shell -->
+
+<!-- ═══════ MODALS & OVERLAYS ═══════ -->
+
+<!-- Detail sheet (animal) -->
+<div id="dback" onclick="closeDsheet()" style="display:none"></div>
+<div id="dsheet">
+  <div class="sh"></div>
+  <div id="dsheet-content"></div>
+</div>
+
+<!-- Buy sheet -->
+<div id="moreback" onclick="closeBuySheet()"></div>
+<div id="moresheet">
+  <div class="sh"></div>
+  <h3 style="margin-bottom:14px;font-size:16px">🐮 Comprar Animal</h3>
+  <div id="moresheet-content"></div>
+</div>
+
+<!-- Profile popup -->
+<div id="ppopback" onclick="closeProfile()"></div>
+<div id="profile-popup">
+  <div class="profile-card">
+    <div id="profile-popup-content">
+      <div class="profile-hero">
+        <div class="profile-avatar-big" id="pp-avatar">F</div>
+        <div>
+          <div style="font-size:16px;font-weight:800" id="pp-username">Fazendeiro</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px" id="pp-farm">Minha Fazenda</div>
+          <div class="profile-badges" id="pp-badges"></div>
+        </div>
+      </div>
+      <div class="profile-stats" id="pp-stats"></div>
+    </div>
+    <div style="padding:12px 14px;display:flex;gap:8px">
+      <button class="bu bf" style="flex:1" onclick="openAdminPanel()">⚙️ Admin</button>
+      <button class="br bf" style="flex:1" onclick="doLogout()">🚪 Sair</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notification panel -->
+<div id="notif-panel">
+  <div class="notif-header">
+    <span>🔔 Notificações</span>
+    <span style="font-size:11px;color:var(--bt);cursor:pointer" onclick="clearNotifs()">Limpar tudo</span>
+  </div>
+  <div id="notif-list">
+    <div class="notif-empty">Nenhuma notificação.</div>
+  </div>
+</div>
+
+<!-- Achievement popup -->
+<div id="achievement-popup">
+  <div class="achiev-card" style="position:relative">
+    <div class="achiev-shine"></div>
+    <div class="achiev-icon" id="ach-icon">🏆</div>
+    <div>
+      <div class="achiev-title">CONQUISTA DESBLOQUEADA!</div>
+      <div class="achiev-name" id="ach-name">Fazendeiro Iniciante</div>
+      <div class="achiev-desc" id="ach-desc">Comprou seu primeiro animal</div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Friend invite sheet -->
+<div id="friend-invite-back" onclick="closeFriendInvite()"></div>
+<div id="friend-invite-sheet">
+  <div class="sh"></div>
+  <h3 style="margin-bottom:14px;font-size:15px">👥 Buscar &amp; Adicionar Jogadores</h3>
+  <div class="friend-search-box">
+    <input class="friend-search-input" id="friend-search-input"
+      placeholder="Buscar por nome ou fazenda..."
+      oninput="searchFriendsLive(this.value)">
+    <button class="bb" onclick="searchFriendsLive(document.getElementById('friend-search-input').value)">🔍</button>
+  </div>
+  <div id="friend-search-results">
+    <div style="color:var(--text3);font-size:12px;text-align:center;padding:12px">
+      Digite ao menos 2 caracteres...
+    </div>
+  </div>
+</div>
+
+<!-- Admin panel -->
+<div id="admin-panel">
+  <div class="admin-header">
+    <span style="font-size:22px">⚙️</span>
+    <span style="font-size:16px;font-weight:800;color:var(--got)">Painel Admin</span>
+    <button onclick="document.getElementById('admin-panel').classList.remove('open')"
+      style="margin-left:auto;background:none;border:none;color:var(--text2);font-size:18px">✕</button>
+  </div>
+  <div style="padding:14px;overflow-y:auto;flex:1">
+    <div class="mg">
+      <div class="admin-stat"><span class="admin-stat-v" id="adm-players">—</span><span class="admin-stat-l">Jogadores</span></div>
+      <div class="admin-stat"><span class="admin-stat-v" id="adm-cows">—</span><span class="admin-stat-l">Gado total</span></div>
+      <div class="admin-stat"><span class="admin-stat-v" id="adm-money">—</span><span class="admin-stat-l">Saldo</span></div>
+    </div>
+    <div class="admin-row"><span>💰 +R$50.000</span><button class="bp" onclick="adminAddMoney()">Adicionar</button></div>
+    <div class="admin-row"><span>🐄 Adicionar Nelore</span><button class="bp" onclick="adminAddCow('nelore')">Adulto</button></div>
+    <div class="admin-row"><span>🥛 Adicionar Holandesa</span><button class="bb" onclick="adminAddCow('holandesa')">Adulta</button></div>
+    <div class="admin-row"><span>⏭ Simular 30 dias</span><button class="ba" onclick="adminFastForward(30)">Avançar</button></div>
+    <div class="admin-row"><span>🧬 +20pts genética geral</span><button class="bu" onclick="adminBoostGen()">Boost</button></div>
+    <div class="admin-row"><span style="color:var(--rt)">🗑 Resetar jogo</span><button class="br" onclick="if(confirm('Resetar tudo?'))resetGame()">Reset</button></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+// ╔══════════════════════════════════════════════════════════╗
+// ║         PECUÁRIA SIMULATOR — CÓDIGO-FONTE                ║
+// ║                                                          ║
+// ║  MÓDULOS (neste arquivo, ordem de declaração):           ║
+// ║  1. Firebase/Backend  — auth, Firestore, rate limit      ║
+// ║  2. Assets/Imagens    — SVGs inline por categoria        ║
+// ║  3. Dados do Jogo     — constantes, raças, mercado       ║
+// ║  4. Autenticação      — login, cadastro, sessão          ║
+// ║  5. Cloud Save        — gzip, sync, anti-cheat           ║
+// ║  6. Engine do Jogo    — nextDay, economia, pecuária      ║
+// ║  7. Render/Interface  — HUD, tabs, sheets, modais        ║
+// ║  8. Social/Amizades   — pedidos, busca, comparação       ║
+// ║  9. Sistemas Online   — conquistas, notifs, admin        ║
+// ╚══════════════════════════════════════════════════════════╝
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║           MÓDULO: FIREBASE / BACKEND                     ║
+// ║  Responsabilidades:                                      ║
+// ║  - Autenticação (Auth)                                   ║
+// ║  - Banco de dados (Firestore)                            ║
+// ║  - Cloud Save comprimido                                 ║
+// ║  - Ranking online                                        ║
+// ║  - Sistema de amizades                                   ║
+// ║  - Rate limiting anti-spam                               ║
+// ╠══════════════════════════════════════════════════════════╣
+// ║  ⚠️  CONFIGURAÇÃO — edite com seus dados do Firebase     ║
+// ║  1. console.firebase.google.com → seu projeto            ║
+// ║  2. Configurações → Apps → Web → copie firebaseConfig    ║
+// ╚══════════════════════════════════════════════════════════╝
+const firebaseConfig = {
+  apiKey:            "AIzaSyD8eeXfiQs97Fs_hRHmSFc38KGCwcwpVsI",
+  authDomain:        "pecuaria-sim.firebaseapp.com",
+  projectId:         "pecuaria-sim",
+  storageBucket:     "pecuaria-sim.firebasestorage.app",
+  messagingSenderId: "561413243877",
+  appId:             "1:561413243877:web:4ae0978bc7269fd052e50c",
+  measurementId:     "G-9Z1XMJ539K"
+};
+
+// Inicializar Firebase
+const FIREBASE_PLACEHOLDER_KEY = "COLE_SUA_API_KEY_AQUI";
+const BACKEND_STATE = {
+  requested: false,
+  ready: false,
+  mode: 'local',
+  reason: '',
+  message: ''
+};
+
+let _fbApp = null;
+let _fbAuth = null;
+let _fbDb = null;
+let _fbConfigured = false;
+let _backendNoticeShown = false;
+
+function setBackendState(nextState) {
+  Object.assign(BACKEND_STATE, nextState);
+  _fbConfigured = !!BACKEND_STATE.ready;
+}
+
+function initFirebaseBackend() {
+  const hasConfig = !!firebaseConfig?.apiKey && firebaseConfig.apiKey !== FIREBASE_PLACEHOLDER_KEY;
+  BACKEND_STATE.requested = hasConfig;
+
+  if (!hasConfig) {
+    setBackendState({
+      ready: false,
+      mode: 'local',
+      reason: 'not-configured',
+      message: 'Firebase não configurado. Modo local ativo neste dispositivo.'
+    });
+    return;
+  }
+
+  if (!window.firebase || typeof window.firebase.initializeApp !== 'function') {
+    setBackendState({
+      ready: false,
+      mode: 'local',
+      reason: 'sdk-missing',
+      message: 'Servidor indisponível para autenticação e nuvem. Modo local ativo neste dispositivo.'
+    });
+    return;
+  }
+
+  try {
+    _fbApp = window.firebase.apps?.length ? window.firebase.app() : window.firebase.initializeApp(firebaseConfig);
+    _fbAuth = window.firebase.auth();
+    _fbDb = window.firebase.firestore();
+    setBackendState({ ready: true, mode: 'cloud', reason: '', message: '' });
+  } catch (error) {
+    console.warn('Firebase init error:', error);
+    _fbApp = null;
+    _fbAuth = null;
+    _fbDb = null;
+    setBackendState({
+      ready: false,
+      mode: 'local',
+      reason: 'init-failed',
+      message: 'Servidor indisponível para autenticação e nuvem. Modo local ativo neste dispositivo.'
+    });
+  }
+}
+
+function backendIsReady() {
+  return _fbConfigured && !!_fbAuth && !!_fbDb;
+}
+
+function backendNeedsNotice() {
+  return BACKEND_STATE.requested && !BACKEND_STATE.ready;
+}
+
+function backendFallbackMessage() {
+  return BACKEND_STATE.message || 'Servidor indisponível. Modo local ativo neste dispositivo.';
+}
+
+function notifyBackendFallback(force = false) {
+  if (!backendNeedsNotice()) return;
+  if (_backendNoticeShown && !force) return;
+  _backendNoticeShown = true;
+
+  const msg = backendFallbackMessage();
+  if (typeof toast === 'function' && document.getElementById('shell')?.style.display !== 'none') {
+    toast(msg, 'warn');
+    return;
+  }
+  console.warn(msg);
+}
+
+function requireBackend() {
+  if (!backendIsReady()) {
+    throw { code: 'backend/unavailable', message: backendFallbackMessage() };
+  }
+}
+
+function serverTimestamp() {
+  return backendIsReady() && window.firebase?.firestore?.FieldValue
+    ? firebase.firestore.FieldValue.serverTimestamp()
+    : Date.now();
+}
+
+function normalizeSearchText(value = '') {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function buildSearchTerms(username = '', farmName = '') {
+  const terms = new Set();
+  const values = [username, farmName].map(normalizeSearchText).filter(Boolean);
+
+  values.forEach(value => {
+    const compact = value.replace(/\s+/g, '');
+    for (let i = 2; i <= Math.min(compact.length, 24); i++) {
+      terms.add(compact.slice(0, i));
+    }
+
+    value.split(' ').filter(token => token.length >= 2).forEach(token => {
+      for (let i = 2; i <= Math.min(token.length, 24); i++) {
+        terms.add(token.slice(0, i));
+      }
+    });
+  });
+
+  return Array.from(terms).slice(0, 80);
+}
+
+function buildUserSearchFields(username = '', farmName = '') {
+  return {
+    username_lower: normalizeSearchText(username).replace(/\s+/g, ''),
+    farmName_lower: normalizeSearchText(farmName),
+    searchTerms: buildSearchTerms(username, farmName)
+  };
+}
+
+async function ensureUserSearchFields(uid, profile = {}) {
+  if (!backendIsReady() || !uid) return profile;
+
+  const normalized = buildUserSearchFields(profile.username || '', profile.farmName || '');
+  const currentTerms = Array.isArray(profile.searchTerms) ? profile.searchTerms : [];
+  const needsUpdate =
+    profile.username_lower !== normalized.username_lower ||
+    profile.farmName_lower !== normalized.farmName_lower ||
+    normalized.searchTerms.some(term => !currentTerms.includes(term));
+
+  if (needsUpdate) {
+    await _col.users().doc(uid).set(normalized, { merge: true });
+  }
+
+  return { ...profile, ...normalized };
+}
+
+const RANKING_FIELDS = {
+  patrimonio: 'patrimonio',
+  leite: 'leite',
+  rebanho: 'rebanho',
+  vendas: 'vendas',
+  genetica: 'genetica'
+};
+
+function getRankingField(filter = 'patrimonio') {
+  return RANKING_FIELDS[filter] || 'patrimonio';
+}
+
+function isFirestoreIndexError(error) {
+  return error?.code === 'failed-precondition' || /index/i.test(error?.message || '');
+}
+
+function rankingIndexError(field) {
+  return {
+    code: 'ranking/index-required',
+    message: `O ranking por ${field} precisa de índice Firestore composto. Crie o índice indicado antes de usar este filtro.`
+  };
+}
+
+initFirebaseBackend();
+
+const _col = {
+  users:    () => { requireBackend(); return _fbDb.collection('users'); },
+  saves:    () => { requireBackend(); return _fbDb.collection('saves'); },
+  ranking:  () => { requireBackend(); return _fbDb.collection('ranking'); },
+  friends:  () => { requireBackend(); return _fbDb.collection('friends'); },
+  requests: () => { requireBackend(); return _fbDb.collection('friend_requests'); },
+};
+
+// Camada de compatibilidade global para evitar ReferenceError em handlers inline
+// e em wrappers legados adicionados ao final do arquivo.
+window.onerror = function(msg, src, line, col, err) {
+  console.error('Erro capturado:', msg, { src, line, col, err });
+  return false;
+};
+
+window.addEventListener('unhandledrejection', event => {
+  console.error('Promise rejeitada não tratada:', event.reason);
+});
+
+function ensureGlobalValue(name, fallback) {
+  if (typeof globalThis[name] === 'undefined') {
+    globalThis[name] = typeof fallback === 'function' ? fallback() : fallback;
+  }
+  return globalThis[name];
+}
+
+function ensureGlobalFunction(name, impl) {
+  if (typeof globalThis[name] !== 'function') {
+    globalThis[name] = impl;
+  }
+  return globalThis[name];
+}
+
+function safeCall(name, ...args) {
+  const fn = globalThis[name];
+  if (typeof fn !== 'function') return undefined;
+  try {
+    return fn(...args);
+  } catch (error) {
+    console.warn(name + ' error:', error);
+    return undefined;
+  }
+}
+
+function getFieldValue(id, trim = false) {
+  const el = document.getElementById(id);
+  const value = typeof el?.value === 'string' ? el.value : '';
+  return trim ? value.trim() : value;
+}
+
+function setAuthMessage(kind, message) {
+  const errorBox = document.querySelector('.auth-error');
+  const successBox = document.querySelector('.auth-success');
+  if (errorBox) {
+    errorBox.textContent = kind === 'error' ? message : '';
+    errorBox.classList.toggle('show', kind === 'error' && !!message);
+  }
+  if (successBox) {
+    successBox.textContent = kind === 'success' ? message : '';
+    successBox.classList.toggle('show', kind === 'success' && !!message);
+  }
+  if ((kind === 'error' || kind === 'success') && !errorBox && !successBox) {
+    console[kind === 'error' ? 'error' : 'info'](message);
+  }
+}
+
+function snapshotGameState() {
+  return {
+    money: Number(globalThis.G?.money || 0),
+    cows: Array.isArray(globalThis.G?.cows) ? globalThis.G.cows : [],
+    stats: globalThis.G?.stats || { born: 0 },
+    milkSold: Number(globalThis.G?.milkSold || 0),
+    milkStock: Number(globalThis.G?.milkStock || 0),
+    vetCal: globalThis.G?.vetCal || { vac: 999 },
+    salesCount: Number(globalThis.G?.salesCount || 0),
+    day: Number(globalThis.G?.day || 1),
+  };
+}
+
+ensureGlobalValue('_authResolved', false);
+ensureGlobalValue('CURRENT_USER', null);
+ensureGlobalValue('currentRankFilter', 'patrimonio');
+ensureGlobalValue('_rankPageState', {});
+ensureGlobalValue('_rankCache', []);
+ensureGlobalValue('_rankCacheFilter', 'patrimonio');
+ensureGlobalValue('_rankHasMore', false);
+ensureGlobalValue('_rankError', '');
+ensureGlobalValue('_rankLoading', false);
+ensureGlobalValue('myFriends', () => {
+  try { return JSON.parse(localStorage.getItem('ps_friends') || '[]'); } catch (_) { return []; }
+});
+ensureGlobalValue('sentRequests', () => {
+  try { return JSON.parse(localStorage.getItem('ps_friend_requests_sent') || '[]'); } catch (_) { return []; }
+});
+ensureGlobalValue('pendingFriendRequests', []);
+ensureGlobalValue('_friendUnsubs', []);
+ensureGlobalValue('ALL_PLAYERS', []);
+ensureGlobalValue('RANK_PLAYERS', []);
+ensureGlobalValue('RANK_SEED', []);
+ensureGlobalValue('FEED_ITEMS', []);
+ensureGlobalValue('unlockedAchievements', () => new Set());
+ensureGlobalValue('MKT', {});
+ensureGlobalValue('G', () => ({
+  money: 0,
+  cows: [],
+  stats: { born: 0 },
+  milkSold: 0,
+  milkStock: 0,
+  vetCal: { vac: 999 },
+  salesCount: 0,
+  day: 1,
+}));
+
+ensureGlobalFunction('_localUsers', function() {
+  try {
+    return JSON.parse(localStorage.getItem('ps_users') || '[]');
+  } catch (_) {
+    return [];
+  }
+});
+
+ensureGlobalFunction('_saveLocalUsers', function(users) {
+  localStorage.setItem('ps_users', JSON.stringify(Array.isArray(users) ? users : []));
+});
+
+ensureGlobalFunction('_hashPass', function(value) {
+  const input = String(value || '');
+  let hash = 0;
+  for (let i = 0; i < input.length; i += 1) {
+    hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
+  }
+  return 'h' + hash.toString(16);
+});
+
+ensureGlobalFunction('_compressSave', async function(payload) {
+  return {
+    blob: JSON.stringify(payload || {}),
+    codec: 'json',
+  };
+});
+
+ensureGlobalFunction('_decompressSave', function(payload) {
+  if (!payload) return null;
+  if (payload.blob && typeof payload.blob === 'string') {
+    try {
+      return JSON.parse(payload.blob);
+    } catch (_) {
+      return null;
+    }
+  }
+  return payload;
+});
+
+ensureGlobalFunction('authError', function(message) {
+  setAuthMessage('error', message || 'Erro desconhecido.');
+});
+
+ensureGlobalFunction('authOk', function(message) {
+  setAuthMessage('success', message || '');
+});
+
+ensureGlobalFunction('authClear', function() {
+  setAuthMessage('error', '');
+  setAuthMessage('success', '');
+});
+
+ensureGlobalFunction('authLoading', function(isLoading) {
+  const buttons = document.querySelectorAll('.auth-btn');
+  buttons.forEach(btn => {
+    btn.disabled = !!isLoading;
+    btn.style.opacity = isLoading ? '.7' : '';
+    btn.style.pointerEvents = isLoading ? 'none' : '';
+  });
+});
+
+ensureGlobalFunction('toast', function(message, level = 'info') {
+  console[level === 'warn' ? 'warn' : 'info'](message);
+});
+
+ensureGlobalFunction('fmt', function(value) {
+  return 'R$' + Number(value || 0).toLocaleString('pt-BR');
+});
+
+ensureGlobalFunction('sellVal', function(cow) {
+  return Number(cow?.price || cow?.value || cow?.sell || 0);
+});
+
+ensureGlobalFunction('getRankPageState', function(filter = 'patrimonio') {
+  if (!globalThis._rankPageState[filter]) {
+    globalThis._rankPageState[filter] = { cursor: null, hasMore: false };
+  }
+  return globalThis._rankPageState[filter];
+});
+
+ensureGlobalFunction('hasRankingCacheFor', function(filter = 'patrimonio') {
+  return globalThis._rankCacheFilter === filter && Array.isArray(globalThis._rankCache) && globalThis._rankCache.length > 0;
+});
+
+ensureGlobalFunction('getLocalPlayerRankingEntry', function() {
+  const cows = Array.isArray(globalThis.G?.cows) ? globalThis.G.cows : [];
+  const patrimonio = Number(globalThis.G?.money || 0) + cows.reduce((sum, cow) => sum + (safeCall('sellVal', cow) || 0), 0);
+  const avgGen = cows.length
+    ? Math.round(cows.reduce((sum, cow) => sum + Number(cow?.gen || 0), 0) / cows.length)
+    : 0;
+  return {
+    id: globalThis.CURRENT_USER?.id || globalThis.CURRENT_USER?.uid || 'local-player',
+    username: globalThis.CURRENT_USER?.username || 'Fazendeiro',
+    farmName: globalThis.CURRENT_USER?.farmName || globalThis.CURRENT_USER?.farm || 'Minha Fazenda',
+    region: globalThis.CURRENT_USER?.region || 'Brasil',
+    avatar: globalThis.CURRENT_USER?.avatar || '🐄',
+    patrimonio,
+    leite: Number(globalThis.G?.milkSold || 0),
+    rebanho: cows.length,
+    vendas: Number(globalThis.G?.salesCount || 0),
+    genetica: avgGen,
+    level: Number(globalThis.CURRENT_USER?.level || 1),
+    day: Number(globalThis.G?.day || 1),
+  };
+});
+
+ensureGlobalFunction('fetchNewsAI', function() {
+  return Promise.resolve([]);
+});
+
+ensureGlobalFunction('addNotif', function(icon, title, message) {
+  console.info('[Notif]', icon || '', title || '', message || '');
+});
+
+ensureGlobalFunction('renderFriends', function() {});
+ensureGlobalFunction('renderFriendRequests', function() {});
+ensureGlobalFunction('renderFriendRanking', function() {});
+ensureGlobalFunction('renderGlobalFeed', function() {});
+ensureGlobalFunction('updateSeasonUI', function() {});
+ensureGlobalFunction('checkAchievements', function() {});
+ensureGlobalFunction('renderMktLive', function() {});
+
+function cleanupFriendSubscriptions() {
+  const unsubs = Array.isArray(globalThis._friendUnsubs) ? globalThis._friendUnsubs : [];
+  unsubs.forEach(unsub => {
+    try {
+      if (typeof unsub === 'function') unsub();
+    } catch (error) {
+      console.warn('friend unsubscribe error:', error);
+    }
+  });
+  globalThis._friendUnsubs = [];
+}
+
+function refreshFriendSearchResults() {
+  const currentQuery = getFieldValue('friend-search-input', true);
+  if (currentQuery && typeof globalThis.searchFriendsLive === 'function') {
+    Promise.resolve(globalThis.searchFriendsLive(currentQuery)).catch(error => {
+      console.warn('searchFriendsLive refresh error:', error);
+    });
+  }
+}
+
+function friendTimestampMs(value) {
+  if (!value) return 0;
+  if (typeof value === 'number') return value;
+  if (value instanceof Date) return value.getTime();
+  if (typeof value.toMillis === 'function') return value.toMillis();
+  if (typeof value.seconds === 'number') return value.seconds * 1000;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function friendPrimaryAvatar(value = '') {
+  const text = String(value || '').trim();
+  if (/^https?:\/\//i.test(text)) return '';
+  return text || '';
+}
+
+function friendPhotoUrl(player = {}) {
+  const candidates = [
+    player.photoURL,
+    player.photoUrl,
+    player.photo,
+    /^https?:\/\//i.test(String(player.avatar || '')) ? player.avatar : ''
+  ];
+  return candidates.find(value => /^https?:\/\//i.test(String(value || '').trim())) || '';
+}
+
+function friendAvatarMarkup(player = {}, size = 38, fontSize = 16, extraStyle = '') {
+  const photo = friendPhotoUrl(player);
+  const style = `width:${size}px;height:${size}px;font-size:${fontSize}px;${extraStyle || ''}`;
+  if (photo) {
+    return `<div class="avatar-ring" style="${style}overflow:hidden"><img src="${photo}" alt="${player.username || 'Fazendeiro'}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>`;
+  }
+  const fallback = friendPrimaryAvatar(player.avatar) || (player.username || 'F')[0].toUpperCase();
+  return `<div class="avatar-ring" style="${style}">${fallback || '\uD83D\uDC04'}</div>`;
+}
+
+function normalizeFriendPlayer(playerId, userData = {}, rankingData = {}, extra = {}) {
+  const username = userData.username || rankingData.username || 'Fazendeiro';
+  const farmName = userData.farmName || userData.farm || rankingData.farmName || rankingData.farm || 'Fazenda';
+  const updatedAtMs = friendTimestampMs(rankingData.updatedAt || userData.updatedAt);
+  return {
+    id: playerId,
+    uid: playerId,
+    username,
+    farmName,
+    farm: farmName,
+    region: userData.region || rankingData.region || 'Brasil',
+    avatar: friendPrimaryAvatar(userData.avatar) || friendPrimaryAvatar(rankingData.avatar) || username[0]?.toUpperCase() || '\uD83D\uDC04',
+    photoURL: friendPhotoUrl({
+      photoURL: userData.photoURL || rankingData.photoURL,
+      photoUrl: userData.photoUrl || rankingData.photoUrl,
+      photo: userData.photo || rankingData.photo,
+      avatar: userData.avatar || rankingData.avatar
+    }),
+    level: Number(rankingData.level || userData.level || 1),
+    rebanho: Number(rankingData.rebanho || userData.rebanho || 0),
+    patrimonio: Number(rankingData.patrimonio || userData.patrimonio || 0),
+    leite: Number(rankingData.leite || userData.leite || 0),
+    vendas: Number(rankingData.vendas || userData.vendas || 0),
+    genetica: Number(rankingData.genetica || userData.genetica || 0),
+    online: updatedAtMs ? (Date.now() - updatedAtMs) <= 15 * 60 * 1000 : false,
+    ...extra
+  };
+}
+
+async function fetchFriendProfiles(uids = []) {
+  if (!backendIsReady()) return new Map();
+  const uniqueIds = Array.from(new Set((uids || []).filter(Boolean)));
+  const entries = await Promise.all(uniqueIds.map(async playerId => {
+    const [userSnap, rankingSnap] = await Promise.all([
+      _col.users().doc(playerId).get().catch(() => null),
+      _col.ranking().doc(playerId).get().catch(() => null)
+    ]);
+    const userData = userSnap?.exists ? userSnap.data() : {};
+    const rankingData = rankingSnap?.exists ? rankingSnap.data() : {};
+    return [playerId, normalizeFriendPlayer(playerId, userData, rankingData)];
+  }));
+  return new Map(entries);
+}
+
+async function mapFriendDocsToPlayers(uid, docs = []) {
+  const activeDocs = (docs || [])
+    .map(doc => ({ docId: doc.id, ...(doc.data() || {}) }))
+    .filter(row =>
+      Array.isArray(row.users) &&
+      row.users.includes(uid) &&
+      (row.status || 'active') === 'active'
+    );
+
+  const friendIds = activeDocs
+    .map(row => row.users.find(playerId => playerId !== uid))
+    .filter(Boolean);
+
+  const profiles = await fetchFriendProfiles(friendIds);
+  return activeDocs
+    .map(row => {
+      const friendId = row.users.find(playerId => playerId !== uid);
+      const profile = profiles.get(friendId) || normalizeFriendPlayer(friendId, {}, {});
+      return {
+        ...profile,
+        friendDocId: row.docId,
+        status: row.status || 'active',
+        createdAt: row.createdAt || null,
+        updatedAt: row.updatedAt || null
+      };
+    })
+    .sort((a, b) => (a.username || '').localeCompare(b.username || '', 'pt-BR'));
+}
+
+async function mapPendingRequestDocs(docs = []) {
+  const rows = (docs || [])
+    .map(doc => ({ requestId: doc.id, ...(doc.data() || {}) }))
+    .filter(row => row.fromUid && (row.status || 'pending') === 'pending');
+
+  const profiles = await fetchFriendProfiles(rows.map(row => row.fromUid));
+  return rows
+    .map(row => {
+      const fromUser = profiles.get(row.fromUid) || normalizeFriendPlayer(row.fromUid, {}, {});
+      return {
+        id: row.requestId,
+        requestId: row.requestId,
+        fromUid: row.fromUid,
+        toUid: row.toUid,
+        status: row.status || 'pending',
+        createdAt: row.createdAt || null,
+        updatedAt: row.updatedAt || null,
+        fromUser
+      };
+    })
+    .sort((a, b) => friendTimestampMs(b.createdAt) - friendTimestampMs(a.createdAt));
+}
+
+function applyFriendState(partial = {}) {
+  if (Object.prototype.hasOwnProperty.call(partial, 'friends')) {
+    globalThis.myFriends = Array.isArray(partial.friends) ? partial.friends : [];
+  }
+  if (Object.prototype.hasOwnProperty.call(partial, 'sentRequests')) {
+    globalThis.sentRequests = Array.isArray(partial.sentRequests) ? partial.sentRequests : [];
+  }
+  if (Object.prototype.hasOwnProperty.call(partial, 'pendingRequests')) {
+    globalThis.pendingFriendRequests = Array.isArray(partial.pendingRequests) ? partial.pendingRequests : [];
+  }
+
+  safeCall('renderFriendRequests');
+  safeCall('renderFriends');
+  safeCall('renderFriendRanking');
+  refreshFriendSearchResults();
+}
+
+ensureGlobalFunction('loadFriendsData', async function() {
+  const uid = globalThis.CURRENT_USER?.uid || globalThis.CURRENT_USER?.id;
+  cleanupFriendSubscriptions();
+
+  if (!uid) {
+    applyFriendState({ friends: [], sentRequests: [], pendingRequests: [] });
+    return { friends: [], sentRequests: [], pendingRequests: [] };
+  }
+
+  if (!backendIsReady()) {
+    globalThis.myFriends = Array.isArray(globalThis.myFriends) ? globalThis.myFriends : [];
+    globalThis.sentRequests = Array.isArray(globalThis.sentRequests) ? globalThis.sentRequests : [];
+    globalThis.pendingFriendRequests = Array.isArray(globalThis.pendingFriendRequests) ? globalThis.pendingFriendRequests : [];
+    safeCall('renderFriendRequests');
+    safeCall('renderFriends');
+    safeCall('renderFriendRanking');
+    return {
+      friends: globalThis.myFriends,
+      sentRequests: globalThis.sentRequests,
+      pendingRequests: globalThis.pendingFriendRequests,
+    };
+  }
+
+  const requestToMeQuery = _col.requests()
+    .where('toUid', '==', uid)
+    .where('status', '==', 'pending');
+
+  const requestFromMeQuery = _col.requests()
+    .where('fromUid', '==', uid)
+    .where('status', '==', 'pending');
+
+  const friendsQuery = _col.friends()
+    .where('users', 'array-contains', uid);
+
+  const updatePendingRequests = async snapshot => {
+    const pendingRequests = await mapPendingRequestDocs(snapshot?.docs || []);
+    applyFriendState({ pendingRequests });
+  };
+
+  const updateSentRequests = snapshot => {
+    const sentRequests = (snapshot?.docs || [])
+      .map(doc => {
+        const data = doc.data() || {};
+        return {
+          id: data.toUid || '',
+          requestId: doc.id,
+          fromUid: data.fromUid || uid,
+          toUid: data.toUid || '',
+          status: data.status || 'pending',
+          createdAt: data.createdAt || null,
+          updatedAt: data.updatedAt || null
+        };
+      })
+      .filter(request => request.id);
+    applyFriendState({ sentRequests });
+  };
+
+  const updateFriends = async snapshot => {
+    const friends = await mapFriendDocsToPlayers(uid, snapshot?.docs || []);
+    applyFriendState({ friends });
+  };
+
+  const [incomingSnap, outgoingSnap, friendsSnap] = await Promise.all([
+    requestToMeQuery.get(),
+    requestFromMeQuery.get(),
+    friendsQuery.get()
+  ]);
+
+  await Promise.all([
+    updatePendingRequests(incomingSnap),
+    Promise.resolve(updateSentRequests(outgoingSnap)),
+    updateFriends(friendsSnap)
+  ]);
+
+  globalThis._friendUnsubs.push(
+    requestToMeQuery.onSnapshot(
+      snapshot => Promise.resolve(updatePendingRequests(snapshot)).catch(error => console.warn('friend requests snapshot error:', error)),
+      error => console.warn('friend requests listener error:', error)
+    )
+  );
+
+  globalThis._friendUnsubs.push(
+    requestFromMeQuery.onSnapshot(
+      snapshot => updateSentRequests(snapshot),
+      error => console.warn('sent requests listener error:', error)
+    )
+  );
+
+  globalThis._friendUnsubs.push(
+    friendsQuery.onSnapshot(
+      snapshot => Promise.resolve(updateFriends(snapshot)).catch(error => console.warn('friends snapshot error:', error)),
+      error => console.warn('friends listener error:', error)
+    )
+  );
+
+  return {
+    friends: globalThis.myFriends,
+    sentRequests: globalThis.sentRequests,
+    pendingRequests: globalThis.pendingFriendRequests,
+  };
+});
+
+ensureGlobalFunction('sendFriendRequest', async function(targetId) {
+  if (!targetId) return false;
+  if (!Array.isArray(globalThis.sentRequests)) {
+    globalThis.sentRequests = [];
+  }
+
+  if (!globalThis.sentRequests.find(request => request.id === targetId)) {
+    globalThis.sentRequests.push({ id: targetId, createdAt: Date.now() });
+    localStorage.setItem('ps_friend_requests_sent', JSON.stringify(globalThis.sentRequests));
+  }
+
+  safeCall('addNotif', '👥', 'Pedido enviado', 'Convite enviado com sucesso.');
+  const currentQuery = getFieldValue('friend-search-input', true);
+  if (currentQuery && typeof globalThis.searchFriendsLive === 'function') {
+    Promise.resolve(globalThis.searchFriendsLive(currentQuery)).catch(error => {
+      console.warn('searchFriendsLive refresh error:', error);
+    });
+  }
+  return true;
+});
+
+loadFriendsData = async function() {
+  const uid = globalThis.CURRENT_USER?.uid || globalThis.CURRENT_USER?.id;
+  cleanupFriendSubscriptions();
+
+  if (!uid) {
+    applyFriendState({ friends: [], sentRequests: [], pendingRequests: [] });
+    return { friends: [], sentRequests: [], pendingRequests: [] };
+  }
+
+  if (!backendIsReady()) {
+    globalThis.myFriends = Array.isArray(globalThis.myFriends) ? globalThis.myFriends : [];
+    globalThis.sentRequests = Array.isArray(globalThis.sentRequests) ? globalThis.sentRequests : [];
+    globalThis.pendingFriendRequests = Array.isArray(globalThis.pendingFriendRequests) ? globalThis.pendingFriendRequests : [];
+    safeCall('renderFriendRequests');
+    safeCall('renderFriends');
+    safeCall('renderFriendRanking');
+    return {
+      friends: globalThis.myFriends,
+      sentRequests: globalThis.sentRequests,
+      pendingRequests: globalThis.pendingFriendRequests,
+    };
+  }
+
+  const requestToMeQuery = _col.requests()
+    .where('toUid', '==', uid)
+    .where('status', '==', 'pending');
+
+  const requestFromMeQuery = _col.requests()
+    .where('fromUid', '==', uid)
+    .where('status', '==', 'pending');
+
+  const friendsQuery = _col.friends()
+    .where('users', 'array-contains', uid);
+
+  const updatePendingRequests = async snapshot => {
+    const pendingRequests = await mapPendingRequestDocs(snapshot?.docs || []);
+    applyFriendState({ pendingRequests });
+  };
+
+  const updateSentRequests = snapshot => {
+    const sentRequests = (snapshot?.docs || [])
+      .map(doc => {
+        const data = doc.data() || {};
+        return {
+          id: data.toUid || '',
+          requestId: doc.id,
+          fromUid: data.fromUid || uid,
+          toUid: data.toUid || '',
+          status: data.status || 'pending',
+          createdAt: data.createdAt || null,
+          updatedAt: data.updatedAt || null
+        };
+      })
+      .filter(request => request.id);
+    applyFriendState({ sentRequests });
+  };
+
+  const updateFriends = async snapshot => {
+    const friends = await mapFriendDocsToPlayers(uid, snapshot?.docs || []);
+    applyFriendState({ friends });
+  };
+
+  const [incomingSnap, outgoingSnap, friendsSnap] = await Promise.all([
+    requestToMeQuery.get(),
+    requestFromMeQuery.get(),
+    friendsQuery.get()
+  ]);
+
+  await Promise.all([
+    updatePendingRequests(incomingSnap),
+    Promise.resolve(updateSentRequests(outgoingSnap)),
+    updateFriends(friendsSnap)
+  ]);
+
+  globalThis._friendUnsubs.push(
+    requestToMeQuery.onSnapshot(
+      snapshot => Promise.resolve(updatePendingRequests(snapshot)).catch(error => console.warn('friend requests snapshot error:', error)),
+      error => console.warn('friend requests listener error:', error)
+    )
+  );
+
+  globalThis._friendUnsubs.push(
+    requestFromMeQuery.onSnapshot(
+      snapshot => updateSentRequests(snapshot),
+      error => console.warn('sent requests listener error:', error)
+    )
+  );
+
+  globalThis._friendUnsubs.push(
+    friendsQuery.onSnapshot(
+      snapshot => Promise.resolve(updateFriends(snapshot)).catch(error => console.warn('friends snapshot error:', error)),
+      error => console.warn('friends listener error:', error)
+    )
+  );
+
+  return {
+    friends: globalThis.myFriends,
+    sentRequests: globalThis.sentRequests,
+    pendingRequests: globalThis.pendingFriendRequests,
+  };
+};
+
+sendFriendRequest = async function(targetId) {
+  if (!targetId) return false;
+  const myUid = globalThis.CURRENT_USER?.uid || globalThis.CURRENT_USER?.id;
+
+  if (!myUid) {
+    toast('Faca login para enviar pedidos de amizade.', 'warn');
+    return false;
+  }
+
+  if (targetId === myUid) {
+    toast('Voce nao pode enviar pedido para si mesmo.', 'warn');
+    return false;
+  }
+
+  if (!backendIsReady()) {
+    toast(backendFallbackMessage(), 'err');
+    return false;
+  }
+
+  try {
+    const friendSnap = await _col.friends()
+      .where('users', 'array-contains', myUid)
+      .get();
+
+    const alreadyFriends = friendSnap.docs.some(doc => {
+      const data = doc.data() || {};
+      return Array.isArray(data.users) && data.users.includes(targetId) && (data.status || 'active') === 'active';
+    });
+
+    if (alreadyFriends) {
+      toast('Esse jogador ja esta na sua lista de amigos.', 'warn');
+      return false;
+    }
+
+    const outgoingSnap = await _col.requests()
+      .where('fromUid', '==', myUid)
+      .where('toUid', '==', targetId)
+      .get();
+
+    const hasOpenRequest = outgoingSnap.docs.some(doc => {
+      const status = doc.data()?.status || 'pending';
+      return status === 'pending' || status === 'accepted';
+    });
+
+    if (hasOpenRequest) {
+      toast('Voce ja enviou um pedido para esse jogador.', 'warn');
+      return false;
+    }
+
+    const incomingSnap = await _col.requests()
+      .where('fromUid', '==', targetId)
+      .where('toUid', '==', myUid)
+      .where('status', '==', 'pending')
+      .get();
+
+    if (!incomingSnap.empty) {
+      toast('Esse jogador ja enviou um pedido para voce. Aceite-o na lista de pedidos.', 'warn');
+      return false;
+    }
+
+    const requestRef = await _col.requests().add({
+      fromUid: myUid,
+      toUid: targetId,
+      status: 'pending',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    globalThis.sentRequests = Array.isArray(globalThis.sentRequests) ? globalThis.sentRequests : [];
+    if (!globalThis.sentRequests.find(request => request.id === targetId)) {
+      globalThis.sentRequests.push({
+        id: targetId,
+        requestId: requestRef.id,
+        fromUid: myUid,
+        toUid: targetId,
+        status: 'pending',
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+    }
+
+    safeCall('renderFriendRequests');
+    safeCall('renderFriends');
+    safeCall('renderFriendRanking');
+    refreshFriendSearchResults();
+    safeCall('addNotif', '\uD83D\uDC65', 'Pedido enviado', 'Convite enviado com sucesso.');
+    toast('\uD83D\uDCE8 Pedido de amizade enviado!', 'ok');
+    return true;
+  } catch (error) {
+    toast(_fbErr(error), 'err');
+    return false;
+  }
+};
+
+async function acceptFriend(requestId, fromUid) {
+  const myUid = CURRENT_USER?.uid || CURRENT_USER?.id;
+  if (!requestId || !fromUid || !myUid) return false;
+
+  if (!backendIsReady()) {
+    toast(backendFallbackMessage(), 'err');
+    return false;
+  }
+
+  try {
+    const requestRef = _col.requests().doc(requestId);
+    const friendshipId = ['friend', ...[myUid, fromUid].sort()].join('_');
+    const friendRef = _col.friends().doc(friendshipId);
+    const batch = _fbDb.batch();
+
+    batch.set(requestRef, {
+      status: 'accepted',
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    batch.set(friendRef, {
+      users: [myUid, fromUid],
+      status: 'active',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    await batch.commit();
+
+    globalThis.pendingFriendRequests = (globalThis.pendingFriendRequests || []).filter(request => request.id !== requestId);
+    safeCall('renderFriendRequests');
+    refreshFriendSearchResults();
+    safeCall('addNotif', '\uD83E\uDD1D', 'Novo amigo', 'Pedido aceito com sucesso.');
+    toast('\uD83E\uDD1D Pedido aceito!', 'ok');
+    return true;
+  } catch (error) {
+    toast(_fbErr(error), 'err');
+    return false;
+  }
+}
+
+async function rejectFriend(requestId) {
+  const myUid = CURRENT_USER?.uid || CURRENT_USER?.id;
+  if (!requestId || !myUid) return false;
+
+  if (!backendIsReady()) {
+    toast(backendFallbackMessage(), 'err');
+    return false;
+  }
+
+  try {
+    await _col.requests().doc(requestId).set({
+      status: 'rejected',
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    globalThis.pendingFriendRequests = (globalThis.pendingFriendRequests || []).filter(request => request.id !== requestId);
+    safeCall('renderFriendRequests');
+    refreshFriendSearchResults();
+    toast('Pedido rejeitado.', 'warn');
+    return true;
+  } catch (error) {
+    toast(_fbErr(error), 'err');
+    return false;
+  }
+}
+
+ensureGlobalFunction('cloudSave', function() {
+  const uid = globalThis.CURRENT_USER?.uid || globalThis.CURRENT_USER?.id;
+  if (!uid) return null;
+  const snapshot = snapshotGameState();
+  localStorage.setItem('ps_save_' + uid, JSON.stringify(snapshot));
+  return snapshot;
+});
+
+ensureGlobalFunction('loadCloudSave', async function(uid) {
+  if (!uid) return null;
+  try {
+    const raw = localStorage.getItem('ps_save_' + uid);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && globalThis.G && typeof globalThis.G === 'object') {
+      Object.assign(globalThis.G, parsed);
+    }
+    return parsed;
+  } catch (error) {
+    console.warn('loadCloudSave fallback error:', error);
+    return null;
+  }
+});
+
+ensureGlobalFunction('nextDay', function() {});
+
+function doLogout() {
+  try {
+    if (window.firebase && firebase.auth) {
+      firebase.auth().signOut();
+    }
+  } catch (e) {
+    console.warn('Erro ao deslogar:', e);
+  }
+
+  localStorage.clear();
+  location.reload();
+}
+
+window.doLogout = doLogout;
+
+// ── DETECTAR SE O FIREBASE ESTÁ CONFIGURADO ──────────────
+
+// ── REFERENCIAS DO BANCO ─────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════
+//  RATE LIMITING — anti-spam de cadastro e login
+// ═══════════════════════════════════════════════════════════
+const _rateLimit = {
+  // Tentativas por ação: { action: [timestamps] }
+  _store: {},
+
+  // Verificar se ação está bloqueada
+  // maxAttempts = nº máximo em windowMs milissegundos
+  check(action, maxAttempts = 5, windowMs = 60_000) {
+    const now = Date.now();
+    if(!this._store[action]) this._store[action] = [];
+    // Limpar tentativas fora da janela
+    this._store[action] = this._store[action].filter(t => now - t < windowMs);
+    if(this._store[action].length >= maxAttempts){
+      const oldest = this._store[action][0];
+      const waitSec = Math.ceil((windowMs - (now - oldest)) / 1000);
+      throw { message: `Muitas tentativas. Aguarde ${waitSec}s antes de tentar novamente.` };
+    }
+    this._store[action].push(now);
+    return true;
+  },
+
+  // Resetar contador (ex: após login bem-sucedido)
+  reset(action){ this._store[action] = []; },
+
+  // Quantidade de tentativas restantes
+  remaining(action, max = 5, windowMs = 60_000){
+    const now = Date.now();
+    const attempts = (this._store[action]||[]).filter(t => now-t < windowMs);
+    return Math.max(0, max - attempts.length);
+  }
+};
+
+// ── HELPERS ──────────────────────────────────────────────
+function _fbErr(e) {
+  const map = {
+    'auth/email-already-in-use': 'E-mail já cadastrado.',
+    'auth/weak-password':        'Senha muito fraca (mín. 6 chars).',
+    'auth/user-not-found':       'E-mail não encontrado.',
+    'auth/wrong-password':       'Senha incorreta.',
+    'auth/invalid-email':        'E-mail inválido.',
+    'auth/too-many-requests':    'Muitas tentativas. Aguarde alguns minutos.',
+    'auth/network-request-failed': 'Sem conexão. Verifique a internet.',
+    'backend/unavailable':       'Servidor indisponível. Modo local ativo neste dispositivo.',
+    'ranking/index-required':    'Ranking indisponível até criar o índice exigido no Firestore.',
+    'failed-precondition':       'Consulta não pode ser executada sem o índice Firestore necessário.',
+    'permission-denied':         'Acesso ao Firebase negado pelas regras do projeto.',
+  };
+  return map[e.code] || e.message || 'Erro desconhecido.';
+}
+
+// ─────────────────────────────────────────────────────────
+//  AUTH: REGISTRO
+// ─────────────────────────────────────────────────────────
+async function fbRegister(email, password, username, farmName, region) {
+  requireBackend();
+  const searchFields = buildUserSearchFields(username, farmName);
+  const existingUser = await _col.users()
+    .where('username_lower', '==', searchFields.username_lower)
+    .limit(1)
+    .get();
+
+  if (!existingUser.empty) {
+    throw { message: 'Usuário já em uso.' };
+  }
+
+  const cred = await _fbAuth.createUserWithEmailAndPassword(email, password);
+  const uid = cred.user.uid;
+  const profile = {
+    uid,
+    username,
+    farmName,
+    email,
+    region,
+    ...searchFields,
+    avatar: (farmName[0] || 'F').toUpperCase(),
+    level: 1,
+    xp: 0,
+    patrimonio: 0,
+    leite: 0,
+    rebanho: 0,
+    vendas: 0,
+    genetica: 0,
+    createdAt: serverTimestamp(),
+  };
+
+  await _col.users().doc(uid).set(profile, { merge: true });
+  return { id: uid, ...profile };
+}
+
+// ─────────────────────────────────────────────────────────
+//  AUTH: LOGIN
+// ─────────────────────────────────────────────────────────
+async function fbLogin(emailOrUser, password) {
+  requireBackend();
+  let email = String(emailOrUser || '').trim();
+
+  if (!email.includes('@')) {
+    const normalizedUser = normalizeSearchText(email).replace(/\s+/g, '');
+    const snap = await _col.users()
+      .where('username_lower', '==', normalizedUser)
+      .limit(1)
+      .get();
+
+    if (snap.empty) {
+      throw { message: 'Usuário não encontrado. Use seu e-mail ou username cadastrado.' };
+    }
+    email = snap.docs[0].data().email;
+  }
+
+  const cred = await _fbAuth.signInWithEmailAndPassword(email, password);
+  const uid = cred.user.uid;
+  const snap = await _col.users().doc(uid).get();
+  let data = snap.exists ? snap.data() : {
+    uid,
+    username: cred.user.email.split('@')[0],
+    farmName: 'Minha Fazenda',
+    email: cred.user.email,
+    region: 'BR',
+    avatar: (cred.user.email?.[0] || 'F').toUpperCase()
+  };
+
+  if (data.banned) {
+    await _fbAuth.signOut();
+    throw { message: 'Conta bloqueada.' };
+  }
+
+  data = await ensureUserSearchFields(uid, data);
+  if (!snap.exists) {
+    await _col.users().doc(uid).set({
+      uid,
+      ...data,
+      createdAt: serverTimestamp(),
+    }, { merge: true });
+  }
+
+  return { id: uid, uid, ...data };
+}
+
+// ─────────────────────────────────────────────────────────
+//  AUTH: RECUPERAÇÃO DE SENHA (e-mail real)
+// ─────────────────────────────────────────────────────────
+async function fbRecover(email) {
+  requireBackend();
+  await _fbAuth.sendPasswordResetEmail(email);
+}
+
+async function fbLogout() {
+  if (backendIsReady()) {
+    await _fbAuth.signOut();
+  }
+}
+
+async function fbSave(uid, gameData) {
+  requireBackend();
+  const money = gameData.money || 0;
+  const day = gameData.day || 1;
+  const cows = gameData.cows || [];
+
+  if (money > 50_000_000) throw { message: 'Save inválido: capital impossível' };
+  if (day > 36500) throw { message: 'Save inválido: dias impossível' };
+  if (cows.length > 500) throw { message: 'Save inválido: rebanho impossível' };
+  if (cows.some(c => c.gen > 100)) throw { message: 'Save inválido: genética impossível' };
+
+  const clean = {
+    ...gameData,
+    cows: cows.map(c => { const { photo, ...rest } = c; return rest; }),
+    pqs: (gameData.pqs || []).map(p => { const { photo, ...rest } = p; return rest; }),
+    version: 6,
+  };
+
+  const compressed = await _compressSave(clean);
+  await _col.saves().doc(uid).set({
+    ...compressed,
+    savedAt: serverTimestamp(),
+  });
+}
+
+async function fbLoad(uid) {
+  requireBackend();
+  const snap = await _col.saves().doc(uid).get();
+  if (!snap.exists) return null;
+  return _decompressSave(snap.data());
+}
+
+async function fbUpdateRanking(uid, entry) {
+  if (!backendIsReady()) return;
+  await _col.ranking().doc(uid).set({
+    uid,
+    ...entry,
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+async function fbGetRanking(field = 'patrimonio', reset = false) {
+  requireBackend();
+  const rankField = getRankingField(field);
+  const pageState = getRankPageState(field);
+
+  if (reset) {
+    pageState.cursor = null;
+    pageState.hasMore = false;
+  }
+
+  try {
+    let query = _col.ranking()
+      .orderBy(rankField, 'desc')
+      .orderBy(firebase.firestore.FieldPath.documentId(), 'asc')
+      .limit(RANK_PAGE_SIZE);
+
+    if (pageState.cursor) {
+      query = query.startAfter(pageState.cursor);
+    }
+
+    const snap = await query.get();
+    pageState.hasMore = snap.docs.length === RANK_PAGE_SIZE;
+    pageState.cursor = snap.docs.length ? snap.docs[snap.docs.length - 1] : null;
+    _rankHasMore = pageState.hasMore;
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (error) {
+    _rankHasMore = false;
+    pageState.hasMore = false;
+    if (isFirestoreIndexError(error)) {
+      throw rankingIndexError(rankField);
+    }
+    throw error;
+  }
+}
+
+async function fbGetRankingNextPage(field = 'patrimonio') {
+  if (!_rankHasMore || _rankLoading) return [];
+  return fbGetRanking(field, false);
+}
+
+async function fbSearchPlayers(query) {
+  requireBackend();
+  const normalized = normalizeSearchText(query);
+  const compact = normalized.replace(/\s+/g, '');
+  if (compact.length < 2) return [];
+
+  const usernamePromise = _col.users()
+    .orderBy('username_lower')
+    .startAt(compact)
+    .endAt(compact + '\uf8ff')
+    .limit(8)
+    .get();
+
+  const farmPromise = _col.users()
+    .orderBy('farmName_lower')
+    .startAt(normalized)
+    .endAt(normalized + '\uf8ff')
+    .limit(8)
+    .get();
+
+  const searchTermPromise = _col.users()
+    .where('searchTerms', 'array-contains', compact)
+    .limit(8)
+    .get();
+
+  const [usernameSnap, farmSnap, searchTermSnap] = await Promise.all([
+    usernamePromise,
+    farmPromise,
+    searchTermPromise
+  ]);
+
+  const hits = new Map();
+  [usernameSnap, farmSnap, searchTermSnap].forEach(snap => {
+    snap.docs.forEach(doc => {
+      hits.set(doc.id, { id: doc.id, ...doc.data() });
+    });
+  });
+
+  return Array.from(hits.values())
+    .map(player => {
+      const usernameLower = player.username_lower || normalizeSearchText(player.username).replace(/\s+/g, '');
+      const farmLower = player.farmName_lower || normalizeSearchText(player.farmName || player.farm || '');
+      const searchTerms = Array.isArray(player.searchTerms) ? player.searchTerms : [];
+      let score = 0;
+      if (usernameLower === compact) score += 300;
+      if (usernameLower.startsWith(compact)) score += 200;
+      if (farmLower.startsWith(normalized)) score += 120;
+      if (searchTerms.includes(compact)) score += 80;
+      return { ...player, _score: score };
+    })
+    .filter(player => player._score > 0)
+    .sort((a, b) => b._score - a._score || (a.username || '').localeCompare(b.username || '', 'pt-BR'))
+    .slice(0, 12)
+    .map(({ _score, ...player }) => player);
+}
+
+function updateCloudStatus(state) {
+  const el = document.getElementById('cloud-status');
+  const txt = document.getElementById('cloud-txt');
+  if (!el || !txt) return;
+
+  if (state === 'ok') {
+    el.className = 'cloud-status cloud-ok';
+    txt.textContent = backendNeedsNotice() ? 'Local' : 'Salvo';
+  } else if (state === 'sync') {
+    el.className = 'cloud-status cloud-sync';
+    txt.textContent = backendNeedsNotice() ? 'Salvando local...' : 'Salvando...';
+  } else {
+    el.className = 'cloud-status cloud-err';
+    txt.textContent = 'Erro';
+  }
+}
+
+async function doLogin() {
+  authClear();
+  const userVal = getFieldValue('li-user', true);
+  const pass = getFieldValue('li-pass');
+  if (!userVal || !pass) { authError('Preencha todos os campos.'); return; }
+
+  try { _rateLimit.check('login', 5, 60_000); }
+  catch (e) { authError(e.message); return; }
+
+  authLoading(true);
+  try {
+    if (_fbConfigured) {
+      _authResolved = true;
+      const user = await fbLogin(userVal, pass);
+      CURRENT_USER = user;
+      authLoading(false);
+      _rateLimit.reset('login');
+      loginSuccess(user);
+      return;
+    }
+
+    const users = _localUsers();
+    const normalizedUser = normalizeSearchText(userVal).replace(/\s+/g, '');
+    const normalizedEmail = normalizeSearchText(userVal);
+    const found = users.find(u =>
+      normalizeSearchText(u.username).replace(/\s+/g, '') === normalizedUser ||
+      normalizeSearchText(u.email) === normalizedEmail
+    );
+
+    if (!found) {
+      authError(
+        backendNeedsNotice()
+          ? backendFallbackMessage() + ' Use uma conta local deste dispositivo ou aguarde o backend voltar.'
+          : 'Usuário não encontrado.'
+      );
+      authLoading(false);
+      return;
+    }
+
+    if (found.password !== _hashPass(pass)) {
+      authError('Senha incorreta.');
+      authLoading(false);
+      return;
+    }
+
+    CURRENT_USER = found;
+    localStorage.setItem('ps_session', JSON.stringify({ id: found.id, username: found.username }));
+    authLoading(false);
+    _rateLimit.reset('login');
+    loginSuccess(found);
+  } catch (e) {
+    authError(_fbConfigured ? _fbErr(e) : (e.message || backendFallbackMessage()));
+    authLoading(false);
+  }
+}
+
+async function doRegister() {
+  authClear();
+  const farm = getFieldValue('ca-farm', true);
+  const user = getFieldValue('ca-user', true);
+  const email = getFieldValue('ca-email', true);
+  const pass = getFieldValue('ca-pass');
+  const region = getFieldValue('ca-region');
+
+  if (!farm || !user || !email || !pass) { authError('Preencha todos os campos.'); return; }
+  if (user.length < 3) { authError('Usuário: mínimo 3 caracteres.'); return; }
+  if (pass.length < 6) { authError('Senha: mínimo 6 caracteres.'); return; }
+  if (!/\S+@\S+\.\S+/.test(email)) { authError('E-mail inválido.'); return; }
+  if (/[<>"'&]/.test(user)) { authError('Usuário contém caracteres inválidos.'); return; }
+  if (farm.length > 50) { authError('Nome da fazenda muito longo (máx. 50 chars).'); return; }
+
+  try { _rateLimit.check('register', 3, 3_600_000); }
+  catch (e) { authError(e.message); return; }
+
+  authLoading(true);
+  try {
+    if (_fbConfigured) {
+      _authResolved = true;
+      const newUser = await fbRegister(email, pass, user, farm, region);
+      CURRENT_USER = newUser;
+      authLoading(false);
+      authOk('Conta criada com sucesso. Entrando...');
+      loginSuccess(newUser);
+      return;
+    }
+
+    const users = _localUsers();
+    const searchFields = buildUserSearchFields(user, farm);
+    if (users.find(u => normalizeSearchText(u.username).replace(/\s+/g, '') === searchFields.username_lower)) {
+      authError('Usuário já em uso.');
+      authLoading(false);
+      return;
+    }
+    if (users.find(u => normalizeSearchText(u.email) === normalizeSearchText(email))) {
+      authError('E-mail já cadastrado.');
+      authLoading(false);
+      return;
+    }
+
+    const localId = 'u' + Date.now();
+    const newUser = {
+      id: localId,
+      uid: localId,
+      username: user,
+      email,
+      password: _hashPass(pass),
+      farmName: farm,
+      region,
+      ...searchFields,
+      createdAt: Date.now(),
+      avatar: (farm[0] || 'F').toUpperCase()
+    };
+
+    users.push(newUser);
+    _saveLocalUsers(users);
+    CURRENT_USER = newUser;
+    localStorage.setItem('ps_session', JSON.stringify({ id: newUser.id, username: newUser.username }));
+    authLoading(false);
+    authOk(
+      backendNeedsNotice()
+        ? 'Servidor indisponível. Conta criada em modo local neste dispositivo.'
+        : 'Conta criada com sucesso.'
+    );
+    loginSuccess(newUser);
+  } catch (e) {
+    authError(_fbConfigured ? _fbErr(e) : (e.message || backendFallbackMessage()));
+    authLoading(false);
+  }
+}
+
+async function doRecover() {
+  authClear();
+  const email = getFieldValue('rc-email', true);
+  if (!email) { authError('Informe o e-mail.'); return; }
+
+  authLoading(true);
+  try {
+    if (_fbConfigured) {
+      await fbRecover(email);
+      authOk('E-mail de recuperação enviado para ' + email + '. Verifique sua caixa.');
+    } else {
+      const users = _localUsers();
+      const exists = users.find(u => normalizeSearchText(u.email) === normalizeSearchText(email));
+      if (!exists) {
+        authError(
+          backendNeedsNotice()
+            ? backendFallbackMessage() + ' A recuperação só funciona para contas locais deste dispositivo.'
+            : 'E-mail não encontrado.'
+        );
+        authLoading(false);
+        return;
+      }
+      authOk('Modo local: recuperação simulada para ' + email + '.');
+    }
+  } catch (e) {
+    authError(_fbConfigured ? _fbErr(e) : 'Erro ao recuperar senha.');
+  }
+  authLoading(false);
+}
+
+async function bootstrapLoginSession(user) {
+  const uid = user.uid || user.id;
+
+  try {
+    await loadCloudSave(uid);
+  } catch (e) {
+    console.warn('loadCloudSave error:', e);
+  }
+
+  const bootstrapResults = await Promise.allSettled([
+    loadFriendsData(),
+    updateRankingGlobal()
+  ]);
+
+  bootstrapResults.forEach(result => {
+    if (result.status === 'rejected') {
+      console.warn('bootstrap task error:', result.reason);
+    }
+  });
+
+  fetchNewsAI().catch(e => console.warn('fetchNewsAI error:', e));
+
+  const h = new Date().getHours();
+  addNotif(
+    '🌅',
+    h < 12 ? 'Bom dia' : 'Bem-vindo de volta',
+    user.username + '! Sua fazenda está esperando.'
+  );
+
+  if (backendNeedsNotice()) {
+    notifyBackendFallback(true);
+  }
+}
+
+function loginSuccess(user) {
+  const authScreen = document.getElementById('auth-screen');
+  const shell = document.getElementById('shell');
+  const topbarUser = document.getElementById('topbar-user');
+  if (authScreen) authScreen.style.display = 'none';
+  if (shell) shell.style.display = 'flex';
+  if (topbarUser) topbarUser.textContent = user?.username || 'Fazendeiro';
+  bootstrapLoginSession(user).catch(e => console.warn('bootstrapLoginSession error:', e));
+}
+
+async function _fbRankingSync() {
+  if (!_fbConfigured || !CURRENT_USER) return;
+  const entry = getLocalPlayerRankingEntry();
+  if (!entry) return;
+  await fbUpdateRanking(CURRENT_USER.uid || CURRENT_USER.id, {
+    username: entry.username,
+    farmName: entry.farmName,
+    region: entry.region,
+    avatar: entry.avatar,
+    patrimonio: entry.patrimonio,
+    leite: entry.leite,
+    rebanho: entry.rebanho,
+    vendas: entry.vendas,
+    genetica: entry.genetica,
+    level: entry.level,
+    day: entry.day,
+  });
+}
+
+function updatePlayerScore() {
+  if (!CURRENT_USER) return Promise.resolve();
+
+  if (_fbConfigured) {
+    return _fbRankingSync().catch(e => console.warn('ranking sync:', e.message));
+  }
+
+  const me = getLocalPlayerRankingEntry();
+  localStorage.setItem('ps_myrank_' + (CURRENT_USER.id || CURRENT_USER.uid), JSON.stringify(me));
+  return Promise.resolve();
+}
+
+async function loadRankingFromFirestore(filter = 'patrimonio', append = false) {
+  if (_rankLoading) return;
+  if (!_fbConfigured) {
+    _rankError = '';
+    _rankCacheFilter = filter;
+    return;
+  }
+
+  _rankLoading = true;
+  _rankCacheFilter = filter;
+  _rankError = '';
+  const pageState = getRankPageState(filter);
+  if (!append) {
+    pageState.cursor = null;
+    pageState.hasMore = false;
+  }
+
+  try {
+    const rows = await fbGetRanking(filter, !append);
+    const myUid = CURRENT_USER?.uid || CURRENT_USER?.id;
+    const mapped = rows.map(r => ({
+      ...r,
+      farmName: r.farmName || r.farm || 'Fazenda',
+      farm: r.farmName || r.farm || 'Fazenda',
+      isMe: r.id === myUid,
+      flag: r.flag || '🇧🇷'
+    }));
+
+    if (append) {
+      const existingIds = new Set(_rankCache.map(r => r.id));
+      mapped.forEach(r => {
+        if (!existingIds.has(r.id)) _rankCache.push(r);
+      });
+    } else {
+      _rankCache = mapped;
+    }
+
+    _rankError = '';
+    _rankHasMore = pageState.hasMore;
+  } catch (e) {
+    console.warn('ranking load error', e);
+    _rankError = _fbErr(e);
+    _rankHasMore = false;
+    if (!append) _rankCache = [];
+  }
+
+  _rankLoading = false;
+  const btn = document.getElementById('rank-load-more');
+  if (btn) btn.style.display = _fbConfigured && !_rankError && _rankHasMore ? 'block' : 'none';
+}
+
+function getRankingData(filter) {
+  if (_fbConfigured) {
+    return _rankCacheFilter === filter ? [..._rankCache] : [];
+  }
+
+  const me = getLocalPlayerRankingEntry();
+  const myUid = me?.id;
+  const data = [...RANK_SEED.filter(r => r.id !== myUid)];
+  if (me) data.push(me);
+  return data.sort((a, b) => (b[filter] || 0) - (a[filter] || 0));
+}
+
+async function updateRankingGlobal() {
+  await updatePlayerScore();
+  if (_fbConfigured) {
+    const pageState = getRankPageState(currentRankFilter);
+    pageState.cursor = null;
+    pageState.hasMore = false;
+    await loadRankingFromFirestore(currentRankFilter, false);
+  }
+}
+
+function renderRanking() {
+  const el = document.getElementById('ranking-list');
+  if (!el) return;
+
+  const data = getRankingData(currentRankFilter);
+  const onlineCount = _fbConfigured ? Math.max(data.length, CURRENT_USER ? 1 : 0) : RANK_PLAYERS.length + 1;
+  document.getElementById('online-count').innerHTML =
+    `<span class="online-dot" style="margin-right:4px"></span>${onlineCount} fazendeiros em destaque`;
+  document.getElementById('rank-updated').textContent = _rankError
+    ? 'Ranking indisponível'
+    : 'Atualizado: ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+  if (_fbConfigured && _rankLoading && !data.length) {
+    el.innerHTML = '<div style="text-align:center;padding:22px;color:var(--text2)"><div class="spinner" style="margin:0 auto 10px"></div>Carregando ranking real...</div>';
+  } else if (_fbConfigured && _rankError) {
+    el.innerHTML = `<div style="padding:16px;border:1px solid rgba(255,120,120,.25);border-radius:12px;background:rgba(120,20,20,.12);color:#ffb5b5;font-size:12px;line-height:1.5">${_rankError}</div>`;
+  } else if (!data.length) {
+    el.innerHTML = '<div style="padding:16px;color:var(--text2);font-size:12px;text-align:center">Nenhum fazendeiro ranqueado neste filtro ainda.</div>';
+  } else {
+    const fmtMap = {
+      patrimonio: v => fmt(v),
+      leite: v => v + 'L',
+      rebanho: v => v + ' cab',
+      vendas: v => v + ' vendas',
+      genetica: v => v + ' pts'
+    };
+
+    el.innerHTML = data.map((p, i) => {
+      const pos = i + 1;
+      const isMe = !!p.isMe;
+      const val = (fmtMap[currentRankFilter] || fmtMap.patrimonio)(p[currentRankFilter] || 0);
+      const chg = p.change || 0;
+      return `<div class="rank-online-item${isMe ? ' me' : ''}${pos === 1 ? ' top1' : ''}">
+        <div class="rank-pos-num" style="color:${pos === 1 ? 'var(--got)' : pos === 2 ? 'var(--text2)' : pos === 3 ? 'var(--at)' : 'var(--text3)'}">${pos}°</div>
+        <div class="avatar-ring" style="width:34px;height:34px;font-size:14px${isMe ? ';border:2px solid var(--green)' : ''}">${p.avatar || '🐄'}</div>
+        <div class="rank-info">
+          <div class="rank-name">${p.username || 'Fazendeiro'}${isMe ? ' <span class="chip cok" style="font-size:8px">Você</span>' : ''}</div>
+          <div class="rank-farm">${p.flag || '🇧🇷'} ${p.farmName || p.farm || 'Fazenda'}</div>
+        </div>
+        <div class="rank-value">
+          <div class="rank-score">${val}</div>
+          <div class="rank-change ${chg > 0 ? 'rank-up' : chg < 0 ? 'rank-dn' : 'rank-eq'}">${chg > 0 ? '↑' + chg : chg < 0 ? '↓' + Math.abs(chg) : '–'}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  const sp = document.getElementById('rkstats');
+  if (sp) {
+    const patrimonio = G.money + G.cows.reduce((s, c) => s + sellVal(c), 0);
+    const myPosBackend = _fbConfigured && _rankCacheFilter === 'patrimonio'
+      ? _rankCache.findIndex(p => p.isMe) + 1
+      : 0;
+    const myPosLocal = !_fbConfigured
+      ? getRankingData('patrimonio').findIndex(p => p.isMe) + 1
+      : 0;
+    const myPos = myPosBackend || myPosLocal;
+    const posLabel = myPos > 0 ? '#' + myPos : '—';
+
+    sp.innerHTML =
+      `<div class="mc"><div class="mc-l">Posição global</div><div class="mc-v" style="color:var(--got)">${posLabel}</div></div>` +
+      `<div class="mc"><div class="mc-l">Patrimônio</div><div class="mc-v">${fmt(patrimonio)}</div></div>` +
+      `<div class="mc"><div class="mc-l">Bezerros nascidos</div><div class="mc-v">${G.stats.born || 0}</div></div>` +
+      `<div class="mc"><div class="mc-l">Leite vendido</div><div class="mc-v">${G.milkSold}L</div></div>`;
+  }
+}
+
+async function searchFriendsLive(query) {
+  const el = document.getElementById('friend-search-results');
+  if (!el) return;
+
+  if (!query || query.length < 2) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:12px;text-align:center;padding:10px">Digite ao menos 2 caracteres...</div>';
+    return;
+  }
+
+  el.innerHTML = '<div style="text-align:center;padding:14px;color:var(--text2);font-size:12px"><div class="spinner" style="margin:0 auto 8px"></div>Buscando...</div>';
+  let results = [];
+
+  if (_fbConfigured) {
+    try {
+      const fbResults = await fbSearchPlayers(query);
+      const myUid = CURRENT_USER?.uid || CURRENT_USER?.id;
+      results = fbResults
+        .filter(p => p.id !== myUid && !myFriends.find(f => f.id === p.id))
+        .map(p => ({
+          ...p,
+          farm: p.farmName || p.farm || 'Fazenda',
+          online: Math.random() > .5,
+          level: p.level || 1,
+          rebanho: p.rebanho || 0,
+          patrimonio: p.patrimonio || 0,
+          avatar: p.avatar || p.username?.[0]?.toUpperCase() || '🐄',
+        }));
+    } catch (e) {
+      el.innerHTML = `<div style="color:#ffb5b5;font-size:12px;text-align:center;padding:12px;line-height:1.5">${_fbErr(e)}</div>`;
+      return;
+    }
+  } else {
+    const q = normalizeSearchText(query);
+    results = ALL_PLAYERS.filter(p =>
+      (normalizeSearchText(p.username).includes(q) || normalizeSearchText(p.farm).includes(q)) &&
+      !myFriends.find(f => f.id === p.id) &&
+      p.id !== CURRENT_USER?.id
+    );
+  }
+
+  if (!results.length) {
+    el.innerHTML = `<div style="color:var(--text2);font-size:12px;text-align:center;padding:10px">Nenhum jogador encontrado para "${query}".</div>`;
+    return;
+  }
+
+  el.innerHTML = results.map(p => {
+    const sent = sentRequests.find(r => r.id === p.id);
+    return `<div class="li" style="margin-bottom:7px">
+      <div class="avatar-ring" style="width:38px;height:38px;font-size:16px;flex-shrink:0">${p.avatar || '🐄'}</div>
+      <div class="friend-status-dot ${p.online ? 'friend-online' : 'friend-offline'}" style="flex-shrink:0;margin-left:-12px;margin-right:2px;align-self:flex-end;margin-bottom:2px"></div>
+      <div class="li-info">
+        <div class="li-n">${p.username} <span class="chip ${(p.level || 1) >= 7 ? 'cgo' : 'cb'}" style="font-size:8px">Lv.${p.level || 1}</span></div>
+        <div class="li-s">🏠 ${p.farmName || p.farm || 'Fazenda'} · 🐄 ${p.rebanho || 0}</div>
+        <div style="font-size:10px;color:var(--text3)">${p.region || 'Brasil'}</div>
+      </div>
+      ${sent
+        ? `<button disabled class="bf" style="font-size:10px;padding:5px 10px;width:auto;opacity:.6">⏳ Enviado</button>`
+        : `<button class="bp" style="font-size:11px;padding:6px 12px" onclick="sendFriendRequest('${p.id}')">➕ Adicionar</button>`
+      }
+    </div>`;
+  }).join('');
+}
+
+const _origDoLogout = typeof doLogout === 'function' ? doLogout : async function() {};
+doLogout = async function() {
+  cleanupFriendSubscriptions();
+  pendingFriendRequests = [];
+  myFriends = [];
+  sentRequests = [];
+  _rankError = '';
+  _rankCacheFilter = 'patrimonio';
+  _rankCache = [];
+  _rankHasMore = false;
+  Object.keys(_rankPageState || {}).forEach(key => delete _rankPageState[key]);
+  await Promise.resolve(_origDoLogout());
+};
+
+const _origRenderRanking = typeof renderRanking === 'function' ? renderRanking : function() {};
+renderRanking = async function() {
+  if (_fbConfigured && !_rankLoading && (_rankCacheFilter !== currentRankFilter || (!_rankError && !hasRankingCacheFor(currentRankFilter)))) {
+    await loadRankingFromFirestore(currentRankFilter);
+  }
+  _origRenderRanking();
+  safeCall('renderFriends');
+  safeCall('renderFriendRanking');
+  safeCall('renderGlobalFeed');
+  safeCall('updateSeasonUI');
+};
+
+// ── AUTO-TICK (simula atualizações do servidor) ───────────────
+let _marketInterval = globalThis._marketInterval || null;
+if (_marketInterval) clearInterval(_marketInterval);
+_marketInterval = setInterval(() => {
+  safeCall('updateSeasonUI');
+  // Simula atividade de outros jogadores no feed
+  if (Math.random() < .15 && Array.isArray(RANK_PLAYERS) && RANK_PLAYERS.length) {
+    const actions=['vendeu bois no leilão','alcançou novo nível','ordenhou o rebanho','construiu uma benfeitoria','entrou no Top 10!'];
+    const players=RANK_PLAYERS;
+    const p=players[Math.floor(Math.random()*players.length)];
+    const a=actions[Math.floor(Math.random()*actions.length)];
+    FEED_ITEMS.unshift({user:p.username,action:a,time:0});
+    if(FEED_ITEMS.length>10)FEED_ITEMS.pop();
+    FEED_ITEMS.forEach((f,i)=>{if(i>0)f.time=Math.round(f.time+(1/60));});
+    const feedEl=document.getElementById('global-feed');if(feedEl)safeCall('renderGlobalFeed');
+  }
+  // Micro-variação de mercado ao vivo
+  if (Math.random() < .3 && MKT && typeof MKT === 'object') {
+    Object.keys(MKT).forEach(k=>{const m=MKT[k];if(!m||typeof m!=='object')return;m.p=Math.max((m.base||0)*.6,Math.min((m.base||0)*1.5,(m.p||0)*(1+(Math.random()-.5)*.008)));});
+    const mpEl=document.getElementById('mprices-live');if(mpEl)safeCall('renderMktLive');
+  }
+},60000); // a cada 1 minuto
+globalThis._marketInterval = _marketInterval;
+
+// ── OVERRIDE nextDay para incluir novos checks ───────────────
+const _origNextDay = nextDay;
+nextDay = function(){
+  _origNextDay();
+  checkAchievements();
+  updateSeasonUI();
+  // Notificações inteligentes
+  const sick=G.cows.filter(c=>c.sick).length;
+  if(sick>0)addNotif('🤒','Alerta sanitário',sick+' animal(is) doente(s) no rebanho!');
+  if(G.vetCal.vac<=3)addNotif('💉','Vacinação urgente','Época de vacinar o rebanho chegou!');
+  if(G.milkStock>500)addNotif('🥛','Estoque alto',G.milkStock+'L de leite estocados — venda!');
+  if(G.money<500)addNotif('💰','Capital baixo','Saldo crítico: '+fmt(G.money));
+};
+
+// ── SALVAR CONQUISTAS NO CLOUD SAVE ──────────────────────────
+const _origCloudSave = cloudSave;
+cloudSave = function(){
+  const result = _origCloudSave();
+  // Also save achievements
+  if(CURRENT_USER)localStorage.setItem('ps_ach_'+(CURRENT_USER.id||CURRENT_USER.uid),JSON.stringify([...unlockedAchievements]));
+  return result;
+};
+const _origLoadCloud = loadCloudSave;
+loadCloudSave = function(uid){
+  const result = _origLoadCloud(uid);
+  try{
+    const raw=localStorage.getItem('ps_ach_'+uid);
+    if(raw)unlockedAchievements=new Set(JSON.parse(raw));
+  }catch{}
+  // Populate feed and notifications on load
+  setTimeout(()=>{renderGlobalFeed();updateSeasonUI();},500);
+  return result;
+};
+
+Object.assign(window, {
+  doLogin,
+  doRegister,
+  doRecover,
+  doLogout,
+  sendFriendRequest,
+  searchFriendsLive,
+  renderRanking,
+  nextDay,
+  cloudSave,
+  loadCloudSave,
+});
+
+</script>
+
+<script>
+/* ================================================================
+   PECUÁRIA SIM — GAME ENGINE v2.0
+   Dados, Lógica, Renderização, Boot
+================================================================ */
+
+// ── RANK PAGE SIZE (usado em firebase fbGetRanking) ──────────
+const RANK_PAGE_SIZE = 20;
+
+// ── RAÇAS DE GADO ───────────────────────────────────────────
+const BREEDS = [
+  { id:'nelore',    name:'Nelore',      emoji:'🐂', type:'beef',  price:3200, milk:0,  gen:10, weight:480, weightBaby:30, growRate:0.55, photo:'nelore.png',
+    desc:'Rei do sertão. Rústico, adaptado ao calor. Ótimo para corte.',     color:'#c8741e' },
+  { id:'angus',     name:'Angus',       emoji:'🐄', type:'beef',  price:5800, milk:0,  gen:22, weight:560, weightBaby:34, growRate:0.60, photo:'angus.png',
+    desc:'Carne marmorizada premium. Alta cotação na arroba.',               color:'#222222' },
+  { id:'brangus',   name:'Brangus',     emoji:'🐄', type:'beef',  price:4800, milk:0,  gen:18, weight:520, weightBaby:32, growRate:0.58, photo:'nelore.png',
+    desc:'Cruzamento Angus+Brahman. Resistente e valorizado.',               color:'#8b4513' },
+  { id:'hereford',  name:'Hereford',    emoji:'🐂', type:'beef',  price:5200, milk:0,  gen:20, weight:550, weightBaby:33, growRate:0.57, photo:'nelore.png',
+    desc:'Raça inglesa nobre. Excelente conversão alimentar.',               color:'#c06030' },
+  { id:'simental',  name:'Simental',    emoji:'🐄', type:'dual',  price:6500, milk:12, gen:28, weight:600, weightBaby:38, growRate:0.62, photo:'simental.png',
+    desc:'Duplo propósito: carne e leite. Alta lucratividade.',              color:'#d4a040' },
+  { id:'holandesa', name:'Holandesa',   emoji:'🐄', type:'dairy', price:7200, milk:28, gen:35, weight:620, weightBaby:40, growRate:0.52, photo:'holandesa.png',
+    desc:'Campeã leiteira. Produz até 30L/dia com boa genética.',            color:'#000000' },
+  { id:'gir',       name:'Gir Leiteiro',emoji:'🐄', type:'dairy', price:5500, milk:18, gen:24, weight:450, weightBaby:28, growRate:0.50, photo:'gir.png',
+    desc:'Adaptada ao trópico. Boa produção leiteira em climas quentes.',    color:'#a05010' },
+  { id:'girolando', name:'Girolando',   emoji:'🐄', type:'dairy', price:6800, milk:22, gen:30, weight:530, weightBaby:35, growRate:0.53, photo:'girolando.png',
+    desc:'Holandesa × Gir. A raça leiteira mais popular do Brasil.',         color:'#404040' },
+];
+
+// ── MERCADO ─────────────────────────────────────────────────
+MKT = {
+  arroba: { name:'Arroba (@)',    icon:'🥩', unit:'@',    base:310,  p:310,  hist:[302,305,308,312,309,315,310,313,310,311] },
+  leite:  { name:'Leite',        icon:'🥛', unit:'L',    base:2.80, p:2.80, hist:[2.7,2.75,2.8,2.78,2.82,2.80,2.79,2.83,2.80,2.81] },
+  vacina: { name:'Vacina',       icon:'💉', unit:'dose', base:45,   p:45,   hist:[44,45,45,45,46,45,44,45,45,45] },
+  racao:  { name:'Ração',        icon:'🌾', unit:'kg',   base:8,    p:8,    hist:[7.5,7.8,8.0,8.1,8.0,7.9,8.0,8.2,8.0,8.0] },
+  boi:    { name:'Boi gordo',    icon:'🐂', unit:'@',    base:320,  p:320,  hist:[315,318,320,322,320,318,321,320,319,320] },
+};
+
+// ── RANK SEED (jogadores fictícios para modo local) ──────────
+RANK_SEED = [
+  { id:'r1',  username:'ZéBoiador',    farmName:'Fazenda Bela Vista',  farm:'Fazenda Bela Vista',  flag:'🇧🇷', avatar:'Z', region:'MS', patrimonio:285000, leite:12400, rebanho:42, vendas:38, genetica:78, level:12, change:2 },
+  { id:'r2',  username:'MariaVaca123', farmName:'Sítio Verde',          farm:'Sítio Verde',          flag:'🇧🇷', avatar:'M', region:'MG', patrimonio:210000, leite:28900, rebanho:35, vendas:29, genetica:92, level:9,  change:-1 },
+  { id:'r3',  username:'PedroPeão',    farmName:'Rancho do Sol',        farm:'Rancho do Sol',        flag:'🇧🇷', avatar:'P', region:'GO', patrimonio:178000, leite:3200,  rebanho:28, vendas:45, genetica:55, level:7,  change:0 },
+  { id:'r4',  username:'AnaLeite',     farmName:'Fazendola Leiteira',   farm:'Fazendola Leiteira',   flag:'🇧🇷', avatar:'A', region:'SP', patrimonio:145000, leite:51200, rebanho:22, vendas:18, genetica:88, level:8,  change:3 },
+  { id:'r5',  username:'TouroTop',     farmName:'Estância Guerreiro',   farm:'Estância Guerreiro',   flag:'🇧🇷', avatar:'T', region:'MT', patrimonio:132000, leite:0,     rebanho:55, vendas:62, genetica:44, level:6,  change:-2 },
+  { id:'r6',  username:'JacaRancho',   farmName:'JR Agropec',           farm:'JR Agropec',           flag:'🇧🇷', avatar:'J', region:'BA', patrimonio:98000,  leite:8800,  rebanho:18, vendas:31, genetica:60, level:5,  change:1 },
+  { id:'r7',  username:'LuizBois',     farmName:'L&B Pecuária',         farm:'L&B Pecuária',         flag:'🇧🇷', avatar:'L', region:'PR', patrimonio:76000,  leite:5600,  rebanho:14, vendas:22, genetica:72, level:4,  change:0 },
+  { id:'r8',  username:'FazOBoio',     farmName:'Chácara Boa Sorte',    farm:'Chácara Boa Sorte',    flag:'🇧🇷', avatar:'F', region:'RS', patrimonio:54000,  leite:12100, rebanho:9,  vendas:14, genetica:50, level:3,  change:-1 },
+  { id:'r9',  username:'SimiRural',    farmName:'Sítio Esperança',      farm:'Sítio Esperança',      flag:'🇧🇷', avatar:'S', region:'RJ', patrimonio:38000,  leite:2200,  rebanho:6,  vendas:8,  genetica:35, level:2,  change:2 },
+  { id:'r10', username:'NovataFarm',   farmName:'Novo Começo',          farm:'Novo Começo',          flag:'🇧🇷', avatar:'N', region:'PE', patrimonio:18000,  leite:800,   rebanho:2,  vendas:3,  genetica:22, level:1,  change:0 },
+];
+ALL_PLAYERS = [...RANK_SEED];
+RANK_PLAYERS = [...RANK_SEED];
+
+// ── FEED ITEMS INICIAIS ──────────────────────────────────────
+FEED_ITEMS = [
+  { user:'ZéBoiador',    action:'entrou no Top 3 do ranking nacional!', time:0.5 },
+  { user:'AnaLeite',     action:'vendeu 1.200L de leite no mercado',    time:1.2 },
+  { user:'MariaVaca123', action:'comprou um touro Angus de R$5.800',    time:2.0 },
+  { user:'PedroPeão',    action:'alcançou Nível 7! 🎉',                 time:3.5 },
+  { user:'TouroTop',     action:'vendeu 8 bois no leilão',              time:5.0 },
+];
+
+// ── ESTADO DO JOGO ──────────────────────────────────────────
+G = {
+  money:     15000,
+  cows:      [],
+  stats:     { born:0, sold:0, dead:0, vacDoses:0 },
+  milkSold:  0,
+  milkStock: 0,
+  vetCal:    { vac:999 },
+  salesCount:0,
+  day:       1,
+  level:     1,
+  xp:        0,
+  log:       [],
+  premiumFeed: 0,  // dias restantes com ração premium
+  vitamins:   0,   // dias restantes com vitaminas
+};
+
+// ── NOMES DE ANIMAIS ─────────────────────────────────────────
+const NAMES_F = ['Mimosa','Estrelinha','Boneca','Florzinha','Pintada','Branquinha','Mansinha','Leiteira','Fofa','Caramela','Pérola','Docinha','Malhada','Pretinha','Clarita','Joana','Bela','Flora','Doce','Linda'];
+const NAMES_M = ['Trovão','Caju','Pintado','Escuro','Bravão','Neguinho','Mansão','Gordão','Caramelo','Robusto','Tigrão','Gigante','Forcado','Valentão','Bravo','Corisco','Faraó','Titã','César','Rústico'];
+let cowCounter = 0;
+
+// ── CONQUISTAS ───────────────────────────────────────────────
+const ACHIEVEMENTS_DEF = [
+  { id:'first_cow',    icon:'🐄', name:'Primeiro Passo',       desc:'Comprou seu primeiro animal',     check: ()=> G.cows.length >= 1 },
+  { id:'ten_cows',     icon:'🐮', name:'Criador em Crescimento',desc:'Tem 10 animais no rebanho',       check: ()=> G.cows.length >= 10 },
+  { id:'first_milk',   icon:'🥛', name:'Leiteiro Iniciante',    desc:'Vendeu leite pela primeira vez',  check: ()=> G.milkSold >= 1 },
+  { id:'milk_1000',    icon:'🏺', name:'Produtor de Leite',     desc:'Acumulou 1.000L de leite vendido',check: ()=> G.milkSold >= 1000 },
+  { id:'money_50k',    icon:'💰', name:'Cinquentão',            desc:'Atingiu R$50.000',                check: ()=> G.money >= 50000 },
+  { id:'money_100k',   icon:'💎', name:'Fazendeiro Rico',       desc:'Atingiu R$100.000',               check: ()=> G.money >= 100000 },
+  { id:'sold_5',       icon:'🤝', name:'Negociante',            desc:'Realizou 5 vendas de animais',    check: ()=> G.salesCount >= 5 },
+  { id:'day_30',       icon:'📅', name:'Um Mês no Campo',       desc:'Sobreviveu 30 dias',              check: ()=> G.day >= 30 },
+  { id:'day_100',      icon:'🌟', name:'Veterano',              desc:'Sobreviveu 100 dias',             check: ()=> G.day >= 100 },
+  { id:'first_birth',  icon:'🎉', name:'Primeira Cria!',        desc:'Nasceu o primeiro bezerro',       check: ()=> G.stats.born >= 1 },
+  { id:'level5',       icon:'⭐', name:'Nível 5',               desc:'Alcançou o nível 5',              check: ()=> G.level >= 5 },
+  { id:'gen50',        icon:'🧬', name:'Melhorista',            desc:'Média genética acima de 50pts',   check: ()=> G.cows.length>0 && G.cows.reduce((s,c)=>s+c.gen,0)/G.cows.length >= 50 },
+];
+
+// ── CLIMA / ESTAÇÃO ──────────────────────────────────────────
+const SEASONS = [
+  { name:'Verão',  icon:'🌞', months:[12,1,2],  milkMod:0.9, weightMod:0.95, sickMod:1.2 },
+  { name:'Outono', icon:'🍂', months:[3,4,5],   milkMod:1.0, weightMod:1.0,  sickMod:1.0 },
+  { name:'Inverno',icon:'❄️', months:[6,7,8],   milkMod:1.05,weightMod:0.98, sickMod:1.3 },
+  { name:'Primavera',icon:'🌸',months:[9,10,11],milkMod:1.1, weightMod:1.05, sickMod:0.8 },
+];
+const WEATHERS = [
+  { icon:'☀️', text:'Ensolarado',   milkMod:1.05, growMod:1.0, prob:0.40 },
+  { icon:'⛅', text:'Parcialmente Nublado', milkMod:1.0, growMod:1.0, prob:0.25 },
+  { icon:'🌧️', text:'Chuvoso',      milkMod:0.95, growMod:0.95,prob:0.20 },
+  { icon:'⛈️', text:'Tempestade',   milkMod:0.80, growMod:0.90,prob:0.08 },
+  { icon:'🌵', text:'Seca Intensa', milkMod:0.85, growMod:0.90,prob:0.07 },
+];
+let currentWeather = WEATHERS[0];
+let currentSeason = SEASONS[0];
+
+function getCurrentSeason() {
+  const m = new Date().getMonth() + 1;
+  return SEASONS.find(s => s.months.includes(m)) || SEASONS[0];
+}
+
+function pickWeather() {
+  let r = Math.random(), cum = 0;
+  for (const w of WEATHERS) { cum += w.prob; if (r < cum) return w; }
+  return WEATHERS[0];
+}
+
+// ── UTILIDADES ───────────────────────────────────────────────
+const fmtNum = v => {
+  v = Number(v || 0);
+  if (v >= 1e6) return 'R$' + (v/1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return 'R$' + (v/1e3).toFixed(1) + 'k';
+  return 'R$' + v.toFixed(0);
+};
+
+// Override global fmt with better version
+fmt = v => {
+  v = Number(v || 0);
+  if (v >= 1e6) return 'R$' + (v/1e6).toFixed(2) + 'M';
+  if (v >= 1e3) return 'R$' + (v/1e3).toFixed(1) + 'k';
+  return 'R$' + v.toFixed(2);
+};
+
+sellVal = cow => Number(cow?.sell || cow?.price || cow?.value || 0);
+
+function addLog(msg, type='info') {
+  const el = document.getElementById('farm-log');
+  if (!el) return;
+  const d = document.createElement('div');
+  d.className = 'll ' + type;
+  d.textContent = msg;
+  el.prepend(d);
+  const items = el.querySelectorAll('.ll');
+  if (items.length > 80) items[items.length-1].remove();
+  G.log.unshift({ msg, type, day: G.day });
+  if (G.log.length > 100) G.log.pop();
+}
+
+// ── TOAST ────────────────────────────────────────────────────
+toast = function(message, level='info') {
+  const el = document.getElementById('toast');
+  if (!el) { console.info(message); return; }
+  el.textContent = message;
+  el.className = 'show ' + (
+    level === 'ok'   ? 'tok'   :
+    level === 'warn' ? 'twarn' :
+    level === 'err'  ? 'terr'  :
+    level === 'gold' ? 'tgold' : 'tok'
+  );
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2800);
+};
+
+// ── NOTIFICATIONS ────────────────────────────────────────────
+let _notifs = [];
+let _notifUnread = 0;
+
+addNotif = function(icon, title, message) {
+  _notifs.unshift({ icon: icon||'📢', title: title||'Aviso', msg: message||'', time: Date.now(), read:false });
+  if (_notifs.length > 30) _notifs.pop();
+  _notifUnread++;
+  const badge = document.getElementById('notif-count');
+  if (badge) { badge.textContent = _notifUnread; badge.style.display = _notifUnread>0?'flex':'none'; }
+  renderNotifPanel();
+};
+
+function renderNotifPanel() {
+  const el = document.getElementById('notif-list');
+  if (!el) return;
+  if (!_notifs.length) { el.innerHTML = '<div class="notif-empty">Nenhuma notificação.</div>'; return; }
+  el.innerHTML = _notifs.map(n => {
+    const mins = Math.round((Date.now()-n.time)/60000);
+    const timeStr = mins < 1 ? 'agora' : mins < 60 ? mins+'min' : Math.round(mins/60)+'h';
+    return `<div class="notif-item${n.read?'':' unread'}" onclick="markNotifRead(this)">
+      <div class="notif-icon">${n.icon}</div>
+      <div>
+        <div class="notif-body-n">${n.title}</div>
+        <div class="notif-body-s">${n.msg}</div>
+        <div class="notif-time">${timeStr} atrás</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function markNotifRead(el) { el.classList.remove('unread'); }
+function clearNotifs() {
+  _notifs = []; _notifUnread = 0;
+  const b = document.getElementById('notif-count');
+  if (b) b.style.display='none';
+  renderNotifPanel();
+}
+function toggleNotifPanel() {
+  const p = document.getElementById('notif-panel');
+  if (!p) return;
+  p.classList.toggle('open');
+  if (p.classList.contains('open')) {
+    _notifUnread = 0;
+    const b = document.getElementById('notif-count');
+    if (b) b.style.display='none';
+    _notifs.forEach(n => n.read=true);
+    renderNotifPanel();
+  }
+}
+
+// ── HUD UPDATE ───────────────────────────────────────────────
+function updateHUD() {
+  const $ = id => document.getElementById(id);
+  const patrimonio = G.money + G.cows.reduce((s,c)=>s+sellVal(c),0);
+
+  if ($('hud-money')) $('hud-money').textContent = fmtNum(G.money);
+  if ($('hud-day'))   $('hud-day').textContent   = G.day;
+  if ($('hud-cows'))  $('hud-cows').textContent  = G.cows.length;
+  if ($('hud-milk'))  $('hud-milk').textContent  = G.milkStock.toFixed(0)+'L';
+  if ($('hud-level')) $('hud-level').textContent = 'Lv.'+G.level;
+  if ($('wstrip-day'))$('wstrip-day').textContent= 'Dia '+G.day;
+
+  // Phase bar counts
+  const counts = { all:G.cows.length, bezerro:0, novilha:0, vaca:0, touro:0 };
+  G.cows.forEach(c => { if (counts[c.phase]!==undefined) counts[c.phase]++; });
+  ['all','bez','nov','vac','tou'].forEach((id,i) => {
+    const k = ['all','bezerro','novilha','vaca','touro'][i];
+    const el = $('ph-'+id);
+    if (el) el.textContent = counts[k];
+  });
+
+  // Farm stats
+  let milkDay=0, cost=0, weightSum=0, genSum=0;
+  G.cows.forEach(c => {
+    milkDay += c.milkPerDay||0;
+    cost    += c.dailyCost||0;
+    weightSum += c.weight||0;
+    genSum  += c.gen||0;
+  });
+  const n = G.cows.length||1;
+  if ($('stat-milk-day'))    $('stat-milk-day').textContent    = milkDay.toFixed(1)+'L';
+  if ($('stat-milk-stock'))  $('stat-milk-stock').textContent  = G.milkStock.toFixed(0);
+  if ($('stat-cost'))        $('stat-cost').textContent        = fmt(cost);
+  if ($('stat-weight'))      $('stat-weight').textContent      = (weightSum/n).toFixed(0)+' kg';
+  if ($('stat-gen'))         $('stat-gen').textContent         = (genSum/n).toFixed(1)+' pts';
+
+  // XP bar
+  const xpNeeded = G.level * 1000;
+  const pct = Math.min(100, ((G.xp||0)/xpNeeded)*100);
+  if ($('xp-bar'))     $('xp-bar').style.width = pct+'%';
+  if ($('xp-pct'))     $('xp-pct').textContent  = pct.toFixed(0)+'%';
+  if ($('xp-level'))   $('xp-level').textContent = G.level;
+  if ($('xp-label'))   $('xp-label').textContent = (G.xp||0)+' / '+xpNeeded+' XP';
+
+  // Sell milk button text
+  const sellBtn = document.querySelector('#p-farm .bb');
+  if (sellBtn && G.milkStock > 0) {
+    const val = G.milkStock * MKT.leite.p;
+    sellBtn.textContent = '🥛 Vender '+G.milkStock.toFixed(0)+'L ('+fmt(val)+')';
+  }
+}
+
+// ── COW HELPERS ──────────────────────────────────────────────
+function getCowPhase(cow) {
+  if (cow.age < 180) return 'bezerro';
+  if (cow.sex === 'm') return cow.age < 540 ? 'novilha' : 'touro';
+  return cow.age < 540 ? 'novilha' : 'vaca';
+}
+
+function computeSellValue(cow, breedDef) {
+  breedDef = breedDef || BREEDS.find(b=>b.id===cow.breedId) || BREEDS[0];
+  if (breedDef.type === 'dairy' || breedDef.type === 'dual') {
+    // Dairy: value based on milk potential
+    const milkValue = breedDef.milk * 365 * MKT.leite.p * 0.3;
+    return Math.round(cow.weight * 1.2 + milkValue + cow.gen * 80);
+  } else {
+    // Beef: weight * carcass yield * arroba price / 15kg
+    const arrobas = (cow.weight * 0.52) / 15;
+    return Math.round(arrobas * MKT.arroba.p * 0.85 + cow.gen * 50);
+  }
+}
+
+function createCow(breedDef, sex, isBaby) {
+  sex = sex || (Math.random() < 0.5 ? 'f' : 'm');
+  const names = sex === 'f' ? NAMES_F : NAMES_M;
+  const name = names[cowCounter % names.length];
+  cowCounter++;
+
+  const age = isBaby ? 0 : Math.floor(Math.random() * 180) + 540; // adult
+  const weight = isBaby ? breedDef.weightBaby : breedDef.weight * (0.85 + Math.random() * 0.3);
+  const cow = {
+    id:         'c' + Date.now() + cowCounter,
+    name,
+    breedId:    breedDef.id,
+    breedName:  breedDef.name,
+    sex,
+    age,
+    weight:     Math.round(weight),
+    gen:        breedDef.gen + Math.floor(Math.random() * 6 - 2),
+    milkPerDay: 0,
+    dailyCost:  0,
+    sick:       false,
+    pregnant:   false,
+    pregnancyDays: 0,
+    lastVaccine: isBaby ? G.day : G.day - Math.floor(Math.random() * 200),
+    phase:      '',
+    sell:       0,
+    purchaseDay:   G.day,
+    purchasePrice: breedDef.price,
+    type:       breedDef.type,
+    premFeedDays: 0,
+  };
+  cow.phase = getCowPhase(cow);
+  cow.sell  = computeSellValue(cow, breedDef);
+  // Milk for adults
+  if ((breedDef.type === 'dairy'||breedDef.type === 'dual') && sex==='f' && cow.phase==='vaca') {
+    cow.milkPerDay = breedDef.milk * (1 + cow.gen/100) * currentSeason.milkMod * currentWeather.milkMod;
+  }
+  cow.dailyCost = cow.weight * 0.008 * (G.premiumFeed>0 ? 1.25 : 1);
+  return cow;
+}
+
+// ── BUY ANIMAL ───────────────────────────────────────────────
+function buyAnimal(breedId, sex) {
+  const breedDef = BREEDS.find(b => b.id === breedId);
+  if (!breedDef) { toast('Raça inválida.', 'err'); return; }
+  const price = breedDef.price * (sex === 'm' ? 1.15 : 1); // machos custam mais
+  if (G.money < price) {
+    toast('💸 Saldo insuficiente! Precisa de '+fmt(price), 'err');
+    return;
+  }
+  G.money -= price;
+  const cow = createCow(breedDef, sex || 'f', false);
+  cow.purchasePrice = price;
+  G.cows.push(cow);
+
+  addLog(`🐄 Comprou ${cow.name} (${breedDef.name}) por ${fmt(price)}`, 'good');
+  addTradeLog(`🛒 Compra: ${cow.name} · ${breedDef.name} · ${fmt(price)}`);
+  toast(`🐄 ${cow.name} chegou à fazenda!`, 'ok');
+
+  checkAchievements();
+  updateHUD();
+  renderFarm();
+  cloudSave();
+  closeBuySheet();
+  closeDsheet();
+}
+
+// ── SELL ANIMAL ──────────────────────────────────────────────
+function sellAnimal(cowId) {
+  const idx = G.cows.findIndex(c => c.id === cowId);
+  if (idx === -1) return;
+  const cow = G.cows[idx];
+  const price = computeSellValue(cow, BREEDS.find(b=>b.id===cow.breedId));
+  cow.sell = price;
+
+  if (!confirm(`Vender ${cow.name} por ${fmt(price)}?`)) return;
+  G.cows.splice(idx, 1);
+  G.money += price;
+  G.salesCount++;
+  G.stats.sold++;
+
+  addLog(`💰 Vendeu ${cow.name} por ${fmt(price)}`, 'good');
+  addTradeLog(`💰 Venda: ${cow.name} · ${cow.breedName} · ${fmt(price)}`);
+  toast(`💰 Vendido! +${fmt(price)}`, 'ok');
+
+  checkAchievements();
+  updatePlayerScore();
+  updateHUD();
+  renderFarm();
+  closeDsheet();
+  cloudSave();
+}
+
+// ── SELL MILK ────────────────────────────────────────────────
+function sellMilkUI() {
+  if (G.milkStock <= 0) { toast('Sem leite para vender! Avance dias.','warn'); return; }
+  const liters = G.milkStock;
+  const price = MKT.leite.p;
+  const value = liters * price;
+  G.money     += value;
+  G.milkSold  += liters;
+  G.milkStock  = 0;
+  G.salesCount++;
+
+  addLog(`🥛 Vendeu ${liters.toFixed(0)}L de leite por ${fmt(value)}`, 'good');
+  addTradeLog(`🥛 Leite: ${liters.toFixed(0)}L × R$${price.toFixed(2)} = ${fmt(value)}`);
+  toast(`🥛 +${fmt(value)} pelo leite!`, 'ok');
+
+  checkAchievements();
+  updatePlayerScore();
+  updateHUD();
+  cloudSave();
+}
+
+// ── BUY VACCINE ──────────────────────────────────────────────
+function buyVaccineUI() {
+  const n = G.cows.length;
+  if (n === 0) { toast('Sem animais para vacinar.','warn'); return; }
+  const price = MKT.vacina.p * n;
+  if (G.money < price) { toast(`Precisa de ${fmt(price)} para vacinar o rebanho.`,'err'); return; }
+  G.money -= price;
+  G.stats.vacDoses += n;
+  G.vetCal.vac = G.day; // reset vaccine calendar
+  G.cows.forEach(c => {
+    c.lastVaccine = G.day;
+    c.sick = false; // vacinação também trata doenças leves
+  });
+  addLog(`💉 Rebanho vacinado! ${n} animais · ${fmt(price)}`, 'info');
+  addTradeLog(`💉 Vacina: ${n} animais · ${fmt(price)}`);
+  toast(`💉 Rebanho protegido por ${n} doses!`, 'ok');
+  updateHUD();
+  renderFarm();
+  cloudSave();
+}
+
+// ── BUY FEED ─────────────────────────────────────────────────
+function buyFeed() {
+  const price = 500; // pacote de ração premium 30 dias
+  if (G.money < price) { toast('Saldo insuficiente.','err'); return; }
+  G.money -= price;
+  G.premiumFeed += 30;
+  G.cows.forEach(c => c.premFeedDays = (c.premFeedDays||0) + 30);
+  addLog(`🌾 Ração premium comprada! +30 dias de crescimento acelerado`, 'good');
+  addTradeLog(`🌾 Ração Premium: ${fmt(price)}`);
+  toast('🌾 Ração premium ativa por 30 dias!', 'ok');
+  updateHUD();
+  cloudSave();
+}
+
+// ── CALL VET ─────────────────────────────────────────────────
+function callVet() {
+  const sick = G.cows.filter(c => c.sick);
+  if (!sick.length) { toast('Nenhum animal doente.','warn'); return; }
+  const price = 200 * sick.length;
+  if (G.money < price) { toast(`Precisa de ${fmt(price)} para o veterinário.`,'err'); return; }
+  G.money -= price;
+  sick.forEach(c => c.sick = false);
+  addLog(`🧑‍⚕️ Veterinário curou ${sick.length} animal(is) · ${fmt(price)}`, 'good');
+  toast(`🧑‍⚕️ ${sick.length} animal(is) curado(s)!`, 'ok');
+  updateHUD();
+  renderFarm();
+  cloudSave();
+}
+
+// ── BUY VITAMINS ─────────────────────────────────────────────
+function buyVitamins() {
+  if (G.money < 30) { toast('Saldo insuficiente.','err'); return; }
+  G.money -= 30;
+  G.vitamins = (G.vitamins||0) + 15;
+  addLog('💊 Vitaminas ministradas ao rebanho por 15 dias.', 'info');
+  toast('💊 Vitaminas ativas por 15 dias!', 'ok');
+  cloudSave();
+}
+
+// ── BUY GENETICS ─────────────────────────────────────────────
+function buyGenetics() {
+  if (G.money < 500) { toast('Precisa de R$500.','err'); return; }
+  G.money -= 500;
+  G.cows.forEach(c => c.gen = Math.min(100, c.gen + 5));
+  addLog('🧬 Melhoramento genético: +5pts para todo o rebanho!', 'good');
+  addTradeLog('🧬 Genética: R$500 · +5pts/animal');
+  toast('🧬 Genética melhorada!', 'ok');
+  checkAchievements();
+  updateHUD();
+  renderFarm();
+  cloudSave();
+}
+
+// ── TRADE LOG ────────────────────────────────────────────────
+function addTradeLog(msg) {
+  const el = document.getElementById('trade-log');
+  if (!el) return;
+  const d = document.createElement('div');
+  d.className = 'll info';
+  d.textContent = '📅 Dia ' + G.day + ' · ' + msg;
+  el.prepend(d);
+  if (el.children.length > 1) {
+    const first = el.querySelector('.ll.info[data-none]');
+    if (first) first.remove();
+  }
+}
+
+// ── GENETICS SHOP ────────────────────────────────────────────
+function renderGeneticsShop() {
+  const el = document.getElementById('genetics-list');
+  if (!el) return;
+  el.innerHTML = [
+    { name:'Sêmen Nelore Elite',  price:300, boost:8,  desc:'Genética bovina especializada para corte' },
+    { name:'Sêmen Angus Marbling',price:500, boost:12, desc:'Alta marmorização, arroba valorizada' },
+    { name:'Sêmen Holandesa A2A2',price:600, boost:15, desc:'Leite tipo A2. Maior valorização no mercado' },
+    { name:'Embrião FIV Premium', price:1200,boost:25, desc:'Fertilização in vitro. Genética de ponta' },
+  ].map(g => `
+    <div class="loan" style="display:flex;align-items:center;gap:12px">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13px">🧬 ${g.name}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">${g.desc}</div>
+        <div style="font-size:11px;color:var(--put);margin-top:2px">+${g.boost} pts genética/animal</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="color:var(--at);font-weight:700">${fmt(g.price)}</div>
+        <button class="bu" style="margin-top:5px;font-size:11px;padding:5px 12px"
+          onclick="buyGeneticItem(${g.price},${g.boost},'${g.name}')">Comprar</button>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function buyGeneticItem(price, boost, name) {
+  if (G.money < price) { toast('Saldo insuficiente.','err'); return; }
+  if (!G.cows.length)  { toast('Precisa de animais no rebanho.','warn'); return; }
+  G.money -= price;
+  G.cows.forEach(c => c.gen = Math.min(100, c.gen + boost));
+  addLog(`🧬 ${name} aplicado! +${boost} pts/animal`, 'good');
+  addTradeLog(`🧬 ${name}: ${fmt(price)}`);
+  toast(`🧬 +${boost} pts genética para ${G.cows.length} animais!`, 'ok');
+  checkAchievements();
+  updateHUD();
+  cloudSave();
+}
+
+// ── NEXT DAY (real logic) ────────────────────────────────────
+const _enhancedNextDay = typeof nextDay === 'function' ? nextDay : function(){};
+nextDay = function() {
+  G.day++;
+
+  // Pick weather for the day
+  currentWeather = pickWeather();
+  currentSeason  = getCurrentSeason();
+  updateWeatherStrip();
+
+  // Premium feed countdown
+  if (G.premiumFeed > 0) G.premiumFeed--;
+  if (G.vitamins    > 0) G.vitamins--;
+
+  let milkProduced = 0;
+  let totalCost    = 0;
+  const events     = [];
+
+  G.cows.forEach(cow => {
+    cow.age++;
+    const bd = BREEDS.find(b=>b.id===cow.breedId) || BREEDS[0];
+    const prevPhase = cow.phase;
+    cow.phase = getCowPhase(cow);
+
+    if (cow.phase !== prevPhase) {
+      events.push({ type:'info', msg:`📈 ${cow.name} passou para a fase: ${cow.phase}` });
+    }
+
+    // Growth
+    const maxW = bd.weight;
+    const premMod = (G.premiumFeed>0||cow.premFeedDays>0) ? 1.25 : 1;
+    const vitMod  = G.vitamins > 0 ? 1.10 : 1.0;
+    const growD   = (maxW - cow.weight) * 0.003 * currentWeather.growMod * currentSeason.weightMod * premMod * vitMod;
+    cow.weight    = Math.min(maxW + 30, cow.weight + Math.max(0, growD));
+    if (cow.premFeedDays > 0) cow.premFeedDays--;
+
+    // Milk
+    if ((bd.type==='dairy'||bd.type==='dual') && cow.sex==='f' && cow.phase==='vaca' && !cow.pregnant) {
+      const milkBase = bd.milk * (1 + cow.gen/100);
+      cow.milkPerDay = milkBase * currentSeason.milkMod * currentWeather.milkMod * (cow.sick ? 0.3 : 1) * vitMod;
+      milkProduced  += cow.milkPerDay;
+    } else {
+      cow.milkPerDay = 0;
+    }
+
+    // Daily cost
+    const feedCost = cow.weight * 0.008 * (G.premiumFeed>0 ? 1.25 : 1);
+    cow.dailyCost  = feedCost;
+    totalCost     += feedCost;
+
+    // Sickness check
+    const daysSinceVac = G.day - (cow.lastVaccine||0);
+    const baseSick = daysSinceVac > 180 ? 0.022 : 0.004;
+    const sickChance = baseSick * currentSeason.sickMod * (G.vitamins>0 ? 0.5 : 1);
+    if (!cow.sick && Math.random() < sickChance) {
+      cow.sick = true;
+      events.push({ type:'alert', msg:`🤒 ${cow.name} ficou doente!` });
+    }
+
+    // Pregnancy trigger (random for females > 540 days)
+    if (cow.sex==='f' && cow.phase==='vaca' && !cow.pregnant && Math.random() < 0.002) {
+      cow.pregnant = true;
+      cow.pregnancyDays = 0;
+      events.push({ type:'info', msg:`🤰 ${cow.name} está prenha!` });
+    }
+
+    // Pregnancy progress
+    if (cow.pregnant) {
+      cow.pregnancyDays++;
+      if (cow.pregnancyDays >= 280) {
+        cow.pregnant = false;
+        cow.pregnancyDays = 0;
+        G.stats.born++;
+        const baby = createCow(bd, Math.random()<0.5?'f':'m', true);
+        baby.gen   = Math.min(100, cow.gen + Math.floor(Math.random()*5));
+        G.cows.push(baby);
+        events.push({ type:'good', msg:`🎉 ${cow.name} pariu! ${baby.name} nasceu.` });
+      }
+    }
+
+    // Update sell value
+    cow.sell = computeSellValue(cow, bd);
+  });
+
+  // Market variation
+  Object.keys(MKT).forEach(k => {
+    const m = MKT[k];
+    const d = (Math.random()-0.5)*0.05;
+    m.p = Math.max(m.base*0.60, Math.min(m.base*1.55, m.p*(1+d)));
+    m.hist.push(parseFloat(m.p.toFixed(2)));
+    if (m.hist.length > 12) m.hist.shift();
+  });
+
+  // Milk stock
+  G.milkStock += milkProduced;
+
+  // Deduct costs
+  G.money -= totalCost;
+  if (G.money < 0) {
+    addLog('💔 Conta negativa! Venda animais ou leite para recuperar.', 'alert');
+    addNotif('💔','Falência iminente','Saldo negativo: '+fmt(G.money));
+  }
+
+  // XP gain
+  G.xp = (G.xp||0) + 10 + G.cows.length * 2 + Math.floor(milkProduced);
+  const xpNeeded = G.level * 1000;
+  if (G.xp >= xpNeeded) {
+    G.xp -= xpNeeded;
+    G.level++;
+    events.push({ type:'gold', msg:`⭐ Subiu para Nível ${G.level}!` });
+    addNotif('⭐','Subiu de nível!','Você alcançou o Nível '+G.level+'!');
+  }
+
+  // Log
+  const milkStr = milkProduced > 0 ? `🥛 +${milkProduced.toFixed(0)}L ` : '';
+  addLog(`📅 Dia ${G.day}: ${milkStr}☀️ ${currentWeather.text} · 💸 Custo: ${fmt(totalCost)}`, 'info');
+  events.forEach(e => {
+    addLog(e.msg, e.type === 'alert' ? 'alert' : e.type === 'good' ? 'good' : e.type === 'gold' ? 'gold' : 'info');
+  });
+
+  // Toasts for important events
+  events.filter(e=>e.type!=='info').forEach(e => {
+    toast(e.msg, e.type==='alert'?'warn': e.type==='good'?'ok': e.type==='gold'?'gold':'ok');
+  });
+
+  // Run the achievements + notifications wrapper from existing code
+  try { _enhancedNextDay(); } catch(e) {}
+
+  updateHUD();
+  renderFarm();
+  renderMktLive();
+  updatePlayerScore();
+  cloudSave();
+};
+
+function nextDayUI() { nextDay(); }
+
+// ── WEATHER STRIP ────────────────────────────────────────────
+function updateWeatherStrip() {
+  const $ = id => document.getElementById(id);
+  if ($('wx-icon'))    $('wx-icon').textContent    = currentWeather.icon;
+  if ($('wx-text'))    $('wx-text').textContent    = currentWeather.text;
+  const eff = currentWeather.milkMod >= 1 ? `+${((currentWeather.milkMod-1)*100).toFixed(0)}% leite` : `-${((1-currentWeather.milkMod)*100).toFixed(0)}% leite`;
+  if ($('wx-effect'))  $('wx-effect').textContent  = eff;
+  if ($('season-chip'))$('season-chip').textContent= currentSeason.icon+' '+currentSeason.name;
+}
+
+// ── SEASON UI ────────────────────────────────────────────────
+updateSeasonUI = function() {
+  const el = document.getElementById('season-badge');
+  if (!el) return;
+  const now = new Date();
+  const monthsIn = now.getDate() / 30 + (now.getMonth() % 3);
+  const pct = Math.min(100, (monthsIn / 3) * 100);
+  const fill = document.getElementById('season-prog-fill');
+  if (fill) fill.style.width = pct.toFixed(0)+'%';
+
+  // Season timer mock
+  const timer = document.getElementById('season-timer');
+  if (timer) {
+    const d = Math.max(0, 30 - G.day % 30);
+    timer.textContent = d + 'd restantes';
+  }
+
+  // My rank badge
+  const badge = document.getElementById('my-rank-badge');
+  if (badge) {
+    const rd = getRankingData('patrimonio');
+    const me = rd.findIndex(p=>p.isMe);
+    if (me >= 0) {
+      const pos = me + 1;
+      const medal = pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'🎖️';
+      badge.textContent = medal+' #'+pos+' lugar';
+    }
+  }
+
+  updateWeatherStrip();
+};
+
+// ── RENDER FARM ──────────────────────────────────────────────
+const _activePhaseFilter = { phase:'all' };
+
+renderFarm = function() {
+  const grid = document.getElementById('cow-grid');
+  if (!grid) return;
+
+  const filtered = _activePhaseFilter.phase === 'all'
+    ? G.cows
+    : G.cows.filter(c => c.phase === _activePhaseFilter.phase);
+
+  if (!filtered.length) {
+    const msg = _activePhaseFilter.phase === 'all'
+      ? `<div style="grid-column:1/-1;text-align:center;padding:32px 16px;color:var(--text3)"><div style="font-size:48px;margin-bottom:10px">🌾</div><div style="font-size:14px;font-weight:700;color:var(--text2)">Fazenda vazia</div><div style="font-size:11px;margin-top:6px">Vá ao <strong style="color:var(--gt)">Mercado</strong> e compre seu primeiro animal!</div></div>`
+      : `<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3)">Nenhum animal nesta fase.</div>`;
+    grid.innerHTML = msg;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(c => {
+    const bd = BREEDS.find(b=>b.id===c.breedId)||BREEDS[0];
+    const healthPct = c.sick ? 20 : Math.min(100, 100 - (G.day - (c.lastVaccine||0)) * 0.3);
+    const healthColor = healthPct > 60 ? 'var(--green)' : healthPct > 30 ? 'var(--amber)' : 'var(--red)';
+    const phaseChip = c.phase === 'bezerro' ? 'cw' : c.phase === 'novilha' ? 'cb' : c.phase === 'touro' ? 'ce' : 'cok';
+
+    return `<div class="cwc${c.sick?' sick':''}${c.pregnant?' preg':''}" onclick="openDsheet('${c.id}')">
+      <div class="cwc-photo"><img src="${bd.photo || 'nelore.png'}" alt="${bd.name}"></div>
+      <div class="cwc-overlay"></div>
+      ${c.sick ? '<div class="sick-overlay"></div>' : ''}
+      <div class="cwc-phase"><span class="chip ${phaseChip}">${c.phase.charAt(0).toUpperCase()+c.phase.slice(1)}</span></div>
+      <div class="cwc-dots">
+        ${c.pregnant ? '<div class="cwc-dot" style="background:var(--purple)" title="Prenha">🤰</div>' : ''}
+        ${c.sick     ? '<div class="cwc-dot" style="background:var(--red)"    title="Doente">🤒</div>' : ''}
+        ${c.milkPerDay > 0 ? '<div class="cwc-dot" style="background:var(--bt)" title="Produzindo leite">🥛</div>' : ''}
+      </div>
+      <div class="cwc-info">
+        <div class="cwc-name">${c.name}</div>
+        <div class="cwc-kg">${c.weight.toFixed(0)}kg · G${c.gen}</div>
+        <div class="cwc-bar"><div class="cwc-fill" style="width:${Math.max(5,healthPct)}%;background:${healthColor}"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+// ── FILTER PHASE ─────────────────────────────────────────────
+function filterPhase(phase) {
+  _activePhaseFilter.phase = phase;
+  document.querySelectorAll('#phase-bar .phb').forEach(el => {
+    el.classList.toggle('on', el.dataset.ph === phase);
+  });
+  renderFarm();
+}
+
+// ── RENDER MARKET ────────────────────────────────────────────
+renderMktLive = function() {
+  const el = document.getElementById('mprices-live');
+  if (!el) return;
+  el.innerHTML = Object.entries(MKT).map(([k,m]) => {
+    const prev = m.hist.length > 1 ? m.hist[m.hist.length-2] : m.base;
+    const chg  = m.p - prev;
+    const pct  = ((chg/prev)*100).toFixed(1);
+    const dir  = chg >= 0 ? 'up' : 'dn';
+    const bars = m.hist.slice(-8).map(v => {
+      const mn = Math.min(...m.hist), mx = Math.max(...m.hist);
+      const h  = mx===mn ? 50 : Math.round(((v-mn)/(mx-mn))*80)+8;
+      return `<div class="mkt-bar" style="height:${h}%;background:${dir==='up'?'var(--green)':'var(--red)'}"></div>`;
+    }).join('');
+    return `<div class="mkt-item-pro ${dir}">
+      <div style="font-size:20px">${m.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:13px">${m.name}</div>
+        <div class="mkt-ref">Base: ${k==='leite'||k==='racao' ? 'R$'+m.base.toFixed(2) : 'R$'+m.base.toFixed(0)}/${m.unit}</div>
+      </div>
+      <div class="mkt-chart-mini">${bars}</div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:16px;font-weight:800;color:${dir==='up'?'var(--gt)':'var(--rt)'}">
+          ${k==='leite'||k==='racao' ? 'R$'+m.p.toFixed(2) : 'R$'+m.p.toFixed(0)}
+        </div>
+        <div style="font-size:10px;color:${dir==='up'?'var(--gt)':'var(--rt)'};font-weight:700">
+          ${dir==='up'?'▲':'▼'} ${Math.abs(parseFloat(pct))}%
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+// ── RENDER GLOBAL FEED ───────────────────────────────────────
+renderGlobalFeed = function() {
+  const el = document.getElementById('global-feed');
+  if (!el) return;
+  if (!FEED_ITEMS.length) {
+    el.innerHTML = '<div class="feed-item"><span class="feed-user">Sistema</span>: Aguardando atividade dos fazendeiros... 🐄</div>';
+    return;
+  }
+  el.innerHTML = FEED_ITEMS.slice(0,10).map(f => {
+    const t = f.time < 1 ? 'agora' : f.time.toFixed(1)+'h';
+    return `<div class="feed-item">
+      <span class="feed-user">🐄 ${f.user || 'Fazendeiro'}</span>: ${f.action || ''}
+      <span class="feed-time">${t}</span>
+    </div>`;
+  }).join('');
+};
+
+// ── RENDER FRIENDS ───────────────────────────────────────────
+renderFriends = function() {
+  const el = document.getElementById('friends-list');
+  if (!el) return;
+  const friends = Array.isArray(myFriends) ? myFriends : [];
+  const countEl = document.getElementById('friends-count');
+  if (countEl) countEl.textContent = friends.length;
+  if (!friends.length) {
+    el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text3);font-size:12px"><div style="font-size:32px;margin-bottom:8px">🤝</div>Nenhum amigo ainda.<br>Busque jogadores para conectar!</div>`;
+    return;
+  }
+  el.innerHTML = friends.map(f => `
+    <div class="friend-card${f.online?' online':''}">
+      <div class="avatar-ring" style="width:38px;height:38px;font-size:16px">${f.avatar||'🐄'}</div>
+      <div class="friend-status-dot ${f.online?'friend-online':'friend-offline'}"></div>
+      <div class="li-info">
+        <div class="li-n">${f.username} <span class="chip ${f.level>=5?'cgo':'cb'}" style="font-size:8px">Lv.${f.level||1}</span></div>
+        <div class="li-s">🏠 ${f.farmName||f.farm||'Fazenda'} · 🐄 ${f.rebanho||0}</div>
+      </div>
+      <div class="friend-actions">
+        <button onclick="visitFarm('${f.id}')" style="font-size:10px;padding:5px 10px">👀 Visitar</button>
+        <button onclick="removeFriend('${f.id}')" class="br" style="font-size:10px;padding:5px 10px">✕</button>
+      </div>
+    </div>`).join('');
+};
+
+// ── RENDER FRIEND RANKING ────────────────────────────────────
+renderFriendRanking = function() {
+  const el = document.getElementById('friend-ranking-list');
+  if (!el) return;
+  const friends = Array.isArray(myFriends) ? [...myFriends] : [];
+  if (!friends.length) {
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">Adicione amigos para ver o ranking!</div>';
+    return;
+  }
+  const me = getLocalPlayerRankingEntry();
+  const all = [...friends, me].sort((a,b)=>(b.patrimonio||0)-(a.patrimonio||0));
+  el.innerHTML = all.map((p,i) => {
+    const pos = i+1;
+    const isMe = p.id === (CURRENT_USER?.id||CURRENT_USER?.uid);
+    return `<div class="rnk${isMe?' me':''}">
+      <div class="friend-rank-pos" style="color:${pos===1?'var(--got)':pos===2?'var(--text2)':pos===3?'var(--at)':'var(--text3)'}">${pos}°</div>
+      <div class="avatar-ring" style="width:32px;height:32px;font-size:13px">${p.avatar||'🐄'}</div>
+      <div style="flex:1"><div style="font-weight:700;font-size:12px">${p.username||'Fazendeiro'}${isMe?' <span class="chip cok" style="font-size:8px">Você</span>':''}</div>
+      <div style="font-size:10px;color:var(--text2)">${p.farmName||p.farm||'Fazenda'}</div></div>
+      <div style="font-weight:800;color:var(--gt)">${fmt(p.patrimonio||0)}</div>
+    </div>`;
+  }).join('');
+};
+
+// ── CHECK ACHIEVEMENTS ───────────────────────────────────────
+renderFriendRequests = function() {
+  const section = document.getElementById('friend-requests-section');
+  const el = document.getElementById('friend-requests-list');
+  if (!section || !el) return;
+
+  const requests = Array.isArray(pendingFriendRequests) ? pendingFriendRequests : [];
+  section.style.display = requests.length ? '' : 'none';
+
+  if (!requests.length) {
+    el.innerHTML = '';
+    return;
+  }
+
+  el.innerHTML = requests.map(request => {
+    const fromUser = request.fromUser || {};
+    return `<div class="friend-req">
+      ${friendAvatarMarkup(fromUser, 38, 16)}
+      <div class="li-info">
+        <div class="li-n">${fromUser.username || 'Fazendeiro'} <span class="chip cb" style="font-size:8px">Lv.${fromUser.level || 1}</span></div>
+        <div class="li-s">&#x1F3E0; ${fromUser.farmName || fromUser.farm || 'Fazenda'} &middot; &#x1F404; ${fromUser.rebanho || 0}</div>
+        <div style="font-size:10px;color:var(--text3)">${fromUser.region || 'Brasil'}</div>
+      </div>
+      <div class="friend-actions">
+        <button class="bp" style="font-size:10px;padding:5px 10px" onclick="acceptFriend('${request.id}','${request.fromUid}')">&#x2705; Aceitar</button>
+        <button class="br" style="font-size:10px;padding:5px 10px" onclick="rejectFriend('${request.id}')">&#x2715; Recusar</button>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+renderFriends = function() {
+  const el = document.getElementById('friends-list');
+  if (!el) return;
+  const friends = Array.isArray(myFriends) ? myFriends : [];
+  const countEl = document.getElementById('friends-count');
+  if (countEl) countEl.textContent = friends.length;
+  if (!friends.length) {
+    el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text3);font-size:12px"><div style="font-size:32px;margin-bottom:8px">&#x1F91D;</div>Nenhum amigo ainda.<br>Busque jogadores para conectar!</div>`;
+    return;
+  }
+  el.innerHTML = friends.map(f => `
+    <div class="friend-card${f.online?' online':''}">
+      ${friendAvatarMarkup(f, 38, 16)}
+      <div class="friend-status-dot ${f.online?'friend-online':'friend-offline'}"></div>
+      <div class="li-info">
+        <div class="li-n">${f.username} <span class="chip ${f.level>=5?'cgo':'cb'}" style="font-size:8px">Lv.${f.level||1}</span></div>
+        <div class="li-s">&#x1F3E0; ${f.farmName||f.farm||'Fazenda'} &middot; &#x1F404; ${f.rebanho||0}</div>
+      </div>
+      <div class="friend-actions">
+        <button onclick="visitFarm('${f.id}')" style="font-size:10px;padding:5px 10px">&#x1F440; Visitar</button>
+        <button onclick="removeFriend('${f.id}')" class="br" style="font-size:10px;padding:5px 10px">&#x2715;</button>
+      </div>
+    </div>`).join('');
+};
+
+renderFriendRanking = function() {
+  const el = document.getElementById('friend-ranking-list');
+  if (!el) return;
+  const friends = Array.isArray(myFriends) ? [...myFriends] : [];
+  if (!friends.length) {
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">Adicione amigos para ver o ranking!</div>';
+    return;
+  }
+  const me = getLocalPlayerRankingEntry();
+  const all = [...friends, me].sort((a,b)=>(b.patrimonio||0)-(a.patrimonio||0));
+  el.innerHTML = all.map((p,i) => {
+    const pos = i+1;
+    const isMe = p.id === (CURRENT_USER?.id||CURRENT_USER?.uid);
+    return `<div class="rnk${isMe?' me':''}">
+      <div class="friend-rank-pos" style="color:${pos===1?'var(--got)':pos===2?'var(--text2)':pos===3?'var(--at)':'var(--text3)'}">${pos}&deg;</div>
+      ${friendAvatarMarkup(p, 32, 13, isMe ? 'border:2px solid var(--green);' : '')}
+      <div style="flex:1"><div style="font-weight:700;font-size:12px">${p.username||'Fazendeiro'}${isMe?' <span class="chip cok" style="font-size:8px">Voce</span>':''}</div>
+      <div style="font-size:10px;color:var(--text2)">${p.farmName||p.farm||'Fazenda'}</div></div>
+      <div style="font-weight:800;color:var(--gt)">${fmt(p.patrimonio||0)}</div>
+    </div>`;
+  }).join('');
+};
+
+checkAchievements = function() {
+  ACHIEVEMENTS_DEF.forEach(a => {
+    if (!unlockedAchievements.has(a.id) && a.check()) {
+      unlockedAchievements.add(a.id);
+      showAchievement(a);
+      addNotif(a.icon, 'Conquista!', a.name+' – '+a.desc);
+    }
+  });
+};
+
+function showAchievement(a) {
+  const popup = document.getElementById('achievement-popup');
+  if (!popup) return;
+  document.getElementById('ach-icon').textContent = a.icon;
+  document.getElementById('ach-name').textContent = a.name;
+  document.getElementById('ach-desc').textContent = a.desc;
+  popup.classList.add('show');
+  clearTimeout(popup._t);
+  popup._t = setTimeout(() => popup.classList.remove('show'), 4000);
+  toast(`🏆 Conquista: ${a.name}!`, 'gold');
+}
+
+// ── PANEL NAVIGATION ─────────────────────────────────────────
+function switchPanel(name) {
+  const panels = { farm:'p-farm', mkt:'p-mkt', social:'p-social', rank:'p-rank' };
+  const btns   = { farm:'bn-farm', mkt:'bn-mkt', social:'bn-social', rank:'bn-rank' };
+
+  Object.keys(panels).forEach(k => {
+    const p = document.getElementById(panels[k]);
+    if (p) p.classList.toggle('on', k===name);
+    const b = document.getElementById(btns[k]);
+    if (b) b.classList.toggle('on', k===name);
+  });
+
+  if (name==='mkt')    { renderMktLive(); renderBreedGrid(); renderGeneticsShop(); }
+  if (name==='social') { renderGlobalFeed(); renderFriendRequests(); renderFriends(); }
+  if (name==='rank')   { safeCall('renderRanking'); }
+
+  // Close notifications panel when switching
+  const notifPanel = document.getElementById('notif-panel');
+  if (notifPanel) notifPanel.classList.remove('open');
+}
+
+// ── SHOP TAB ─────────────────────────────────────────────────
+function switchShopTab(tab) {
+  ['animais','insumos','genetica','historico'].forEach(t => {
+    const el = document.getElementById('shop-'+t);
+    if (el) el.style.display = t===tab ? '' : 'none';
+  });
+  document.querySelectorAll('#shop-nav .snb').forEach(el => {
+    el.classList.toggle('on', el.dataset.tab===tab);
+  });
+  if (tab==='genetica') renderGeneticsShop();
+}
+
+// ── RANK FILTER ──────────────────────────────────────────────
+function setRankFilter(filter) {
+  currentRankFilter = filter;
+  document.querySelectorAll('.rfbtn').forEach(el => {
+    const f = el.getAttribute('onclick').match(/setRankFilter\('(\w+)'\)/)?.[1];
+    el.classList.toggle('on', f===filter);
+  });
+  safeCall('renderRanking');
+}
+
+// ── BREED GRID (shop) ─────────────────────────────────────────
+function renderBreedGrid() {
+  const el = document.getElementById('breed-grid');
+  if (!el) return;
+  el.innerHTML = BREEDS.map(b => {
+    const canAfford = G.money >= b.price;
+    return `<div class="sc" style="opacity:${canAfford?1:0.6}">
+      <img src="${b.photo || 'nelore.png'}" class="sc-photo" alt="${b.name}">
+      <div class="sc-body">
+        <div class="sc-n">${b.name}</div>
+        <div class="chip ${b.type==='beef'?'ce':b.type==='dairy'?'cb':'cw'}" style="margin-bottom:6px;font-size:9px">${b.type==='beef'?'🥩 Corte':b.type==='dairy'?'🥛 Leite':'⚡ Duplo'}</div>
+        <div class="sc-d">${b.desc}</div>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:6px">
+          ⚖️ ${b.weight}kg · 🧬 ${b.gen}pts${b.milk>0?` · 🥛 ${b.milk}L/d`:''}
+        </div>
+        <div class="sc-p">${fmt(b.price)}/vaca</div>
+        <div style="display:flex;gap:6px">
+          <button class="bp bf" style="flex:1;font-size:11px" onclick="buyAnimal('${b.id}','f')" ${canAfford?'':'disabled'}>
+            ♀ Fêmea
+          </button>
+          <button class="ba bf" style="flex:1;font-size:11px" onclick="buyAnimal('${b.id}','m')" ${G.money>=b.price*1.15?'':'disabled'}>
+            ♂ ${fmt(b.price*1.15)}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── DETAIL SHEET ─────────────────────────────────────────────
+function openDsheet(cowId) {
+  const cow = G.cows.find(c => c.id===cowId);
+  if (!cow) return;
+  const bd    = BREEDS.find(b=>b.id===cow.breedId)||BREEDS[0];
+  const sell  = computeSellValue(cow, bd);
+  cow.sell    = sell;
+  const healthPct = cow.sick ? 20 : Math.min(100, 100 - (G.day-(cow.lastVaccine||0))*0.3);
+  const hColor = healthPct>60?'var(--green)':healthPct>30?'var(--amber)':'var(--red)';
+
+  document.getElementById('dsheet-content').innerHTML = `
+    <div class="animal-hero">
+      <img src="${bd.photo || 'nelore.png'}" alt="${bd.name}">
+      <div class="animal-hero-overlay"></div>
+      <div class="animal-hero-info">
+        <div style="font-size:20px;font-weight:900">${cow.name}</div>
+        <div style="font-size:12px;color:var(--text2)">${bd.name} · ${cow.sex==='f'?'Fêmea':'Macho'}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      <span class="chip ${cow.phase==='bezerro'?'cw':cow.phase==='novilha'?'cb':cow.phase==='touro'?'ce':'cok'}">${cow.phase.charAt(0).toUpperCase()+cow.phase.slice(1)}</span>
+      ${cow.sick?'<span class="chip ce">🤒 Doente</span>':'<span class="chip cok">✅ Saudável</span>'}
+      ${cow.pregnant?'<span class="chip cpu">🤰 Prenha '+cow.pregnancyDays+'d</span>':''}
+      <span class="chip cb">${bd.type==='beef'?'🥩 Corte':bd.type==='dairy'?'🥛 Leite':'⚡ Duplo'}</span>
+    </div>
+
+    <div class="dr"><span class="drl">Peso vivo</span><strong>${cow.weight.toFixed(0)} kg</strong></div>
+    <div class="dr"><span class="drl">Idade</span><strong>${Math.floor(cow.age/30)} meses (${cow.age} dias)</strong></div>
+    <div class="dr"><span class="drl">Genética</span><strong style="color:var(--put)">${cow.gen} pts</strong></div>
+    ${cow.milkPerDay>0?`<div class="dr"><span class="drl">Produção de leite</span><strong style="color:var(--bt)">${cow.milkPerDay.toFixed(1)} L/dia</strong></div>`:''}
+    <div class="dr"><span class="drl">Saúde</span>
+      <div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end">
+        <div class="pw" style="width:80px"><div class="pf" style="width:${Math.max(5,healthPct)}%;background:${hColor}"></div></div>
+        <strong style="color:${hColor}">${healthPct.toFixed(0)}%</strong>
+      </div>
+    </div>
+    <div class="dr"><span class="drl">Custo diário</span><strong style="color:var(--rt)">${fmt(cow.dailyCost)}</strong></div>
+    <div class="dr"><span class="drl">Comprado no dia</span><strong>${cow.purchaseDay}</strong></div>
+    <div class="dr"><span class="drl">Preço de compra</span><strong>${fmt(cow.purchasePrice)}</strong></div>
+    <div class="dr"><span class="drl">Valor atual de venda</span><strong style="color:var(--gt);font-size:16px">${fmt(sell)}</strong></div>
+
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+      <button class="br bf" style="flex:1" onclick="sellAnimal('${cow.id}')">💰 Vender ${fmt(sell)}</button>
+      ${cow.sick?`<button class="ba bf" style="flex:1" onclick="callVet();closeDsheet()">🧑‍⚕️ Chamar Vet.</button>`:''}
+      <button class="bb bf" style="flex:1;font-size:11px" onclick="renameCow('${cow.id}')">✏️ Renomear</button>
+    </div>
+  `;
+
+  document.getElementById('dback').classList.add('on');
+  document.getElementById('dsheet').classList.add('open');
+}
+
+function closeDsheet() {
+  document.getElementById('dback').classList.remove('on');
+  document.getElementById('dsheet').classList.remove('open');
+}
+
+function renameCow(cowId) {
+  const cow = G.cows.find(c=>c.id===cowId);
+  if (!cow) return;
+  const name = prompt('Novo nome para '+cow.name+':', cow.name);
+  if (name && name.trim()) {
+    cow.name = name.trim().slice(0,20);
+    toast('✏️ Renomeado para '+cow.name, 'ok');
+    openDsheet(cowId); // refresh
+  }
+}
+
+// ── BUY SHEET ────────────────────────────────────────────────
+function openBuySheet() {
+  renderBreedGrid();
+  const content = document.getElementById('moresheet-content');
+  if (content) {
+    const grid = document.getElementById('breed-grid');
+    if (grid) content.innerHTML = grid.outerHTML.replace(' id="breed-grid"',' id="buy-grid2"');
+    content.innerHTML = '<div class="sg" id="buy-grid-ms"></div>';
+    renderBreedGridInto('buy-grid-ms');
+  }
+  document.getElementById('moreback').style.display='block';
+  document.getElementById('moresheet').style.transform='translateY(0)';
+}
+
+function renderBreedGridInto(targetId) {
+  const el = document.getElementById(targetId);
+  if (!el) return;
+  el.innerHTML = BREEDS.map(b => {
+    const canAfford = G.money >= b.price;
+    return `<div class="sc" style="opacity:${canAfford?1:0.55}">
+      <img src="${b.photo || 'nelore.png'}" class="sc-photo" alt="${b.name}">
+      <div class="sc-body">
+        <div class="sc-n">${b.name}</div>
+        <div class="chip ${b.type==='beef'?'ce':b.type==='dairy'?'cb':'cw'}" style="margin-bottom:4px;font-size:9px">${b.type==='beef'?'🥩':b.type==='dairy'?'🥛':'⚡'} ${b.type}</div>
+        <div class="sc-d">${b.desc}</div>
+        <div class="sc-p">${fmt(b.price)}</div>
+        <button class="bp bf" style="font-size:11px" onclick="buyAnimal('${b.id}','f')" ${canAfford?'':'disabled'}>♀ Comprar Fêmea</button>
+        <button class="ba bf" style="font-size:11px;margin-top:5px" onclick="buyAnimal('${b.id}','m')" ${G.money>=b.price*1.15?'':'disabled'}>♂ Macho ${fmt(b.price*1.15)}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function closeBuySheet() {
+  document.getElementById('moreback').style.display='none';
+  document.getElementById('moresheet').style.transform='translateY(100%)';
+}
+
+// ── PROFILE POPUP ────────────────────────────────────────────
+function openProfile() {
+  if (!CURRENT_USER) return;
+  const u = CURRENT_USER;
+  const cows = G.cows.length;
+  const patrimonio = G.money + G.cows.reduce((s,c)=>s+sellVal(c),0);
+  const avgGen = cows ? (G.cows.reduce((s,c)=>s+c.gen,0)/cows).toFixed(1) : 0;
+
+  document.getElementById('pp-avatar').textContent   = u.avatar || (u.username||'F')[0].toUpperCase();
+  document.getElementById('pp-username').textContent = u.username || 'Fazendeiro';
+  document.getElementById('pp-farm').textContent     = (u.farmName||u.farm||'Minha Fazenda')+' · '+u.region;
+
+  const statsEl = document.getElementById('pp-stats');
+  if (statsEl) statsEl.innerHTML = [
+    { v: fmt(patrimonio), l:'Patrimônio' },
+    { v: cows,            l:'Animais' },
+    { v: G.milkSold.toFixed(0)+'L', l:'Leite Vendido' },
+    { v: G.salesCount,   l:'Vendas' },
+    { v: G.day,          l:'Dias' },
+    { v: avgGen+' pts',  l:'Genética Média' },
+  ].map(s=>`<div class="pstat"><div class="pstat-v">${s.v}</div><div class="pstat-l">${s.l}</div></div>`).join('');
+
+  const badges = document.getElementById('pp-badges');
+  if (badges) {
+    const earned = ACHIEVEMENTS_DEF.filter(a=>unlockedAchievements.has(a.id));
+    badges.innerHTML = earned.slice(0,5).map(a=>`<span class="badge badge-gold">${a.icon} ${a.name}</span>`).join('');
+  }
+
+  document.getElementById('ppopback').classList.add('on');
+  document.getElementById('profile-popup').classList.add('open');
+}
+
+function closeProfile() {
+  document.getElementById('ppopback').classList.remove('on');
+  document.getElementById('profile-popup').classList.remove('open');
+}
+
+function openAdminPanel() {
+  if (!CURRENT_USER || CURRENT_USER?.email !== "wilsonloures2008@gmail.com") {
+    toast('\u26D4 Acesso negado. Apenas o dono do jogo pode abrir este painel.', 'err');
+    return;
+  }
+  closeProfile();
+  const panel = document.getElementById('admin-panel');
+  if (!panel) return;
+  const el = id => document.getElementById(id);
+  if (el('adm-players')) el('adm-players').textContent = RANK_SEED.length+1;
+  if (el('adm-cows'))    el('adm-cows').textContent    = G.cows.length;
+  if (el('adm-money'))   el('adm-money').textContent   = fmt(G.money);
+  panel.classList.add('open');
+}
+
+// ── AUTH TAB SWITCH ──────────────────────────────────────────
+function authSwitchTab(tab) {
+  ['login','register','recover'].forEach(t => {
+    const form = document.getElementById('form-'+t);
+    const btn  = document.getElementById('atab-'+t);
+    if (form) form.style.display = t===tab?'':'none';
+    if (btn)  btn.classList.toggle('on', t===tab);
+  });
+  // Clear messages on switch
+  document.querySelectorAll('.auth-error,.auth-success').forEach(el=>{
+    el.classList.remove('show');
+    el.textContent='';
+  });
+}
+
+// ── FRIEND INVITE SHEET ──────────────────────────────────────
+function openFriendInvite() {
+  document.getElementById('friend-invite-back').style.display='block';
+  document.getElementById('friend-invite-sheet').classList.add('open');
+}
+function closeFriendInvite() {
+  document.getElementById('friend-invite-back').style.display='none';
+  document.getElementById('friend-invite-sheet').classList.remove('open');
+}
+
+// ── FRIEND UTILS ─────────────────────────────────────────────
+function visitFarm(playerId) {
+  const p = ALL_PLAYERS.find(x=>x.id===playerId);
+  if (!p) { toast('Fazenda não encontrada.','warn'); return; }
+  toast(`👀 Visitando fazenda de ${p.username}...`,'ok');
+}
+
+async function removeFriend(playerId) {
+  if (!confirm('Remover este amigo?')) return;
+
+  const myUid = CURRENT_USER?.uid || CURRENT_USER?.id;
+  if (!myUid || !playerId) return;
+
+  if (!backendIsReady()) {
+    myFriends = (myFriends||[]).filter(f=>f.id!==playerId);
+    renderFriends();
+    renderFriendRanking();
+    toast('Amigo removido.','warn');
+    return;
+  }
+
+  try {
+    const friendsSnap = await _col.friends()
+      .where('users', 'array-contains', myUid)
+      .get();
+
+    const matches = friendsSnap.docs.filter(doc => {
+      const data = doc.data() || {};
+      return Array.isArray(data.users) && data.users.includes(playerId) && (data.status || 'active') === 'active';
+    });
+
+    await Promise.all(matches.map(doc => doc.ref.set({
+      status: 'removed',
+      updatedAt: serverTimestamp()
+    }, { merge: true })));
+
+    myFriends = (myFriends||[]).filter(f=>f.id!==playerId);
+    renderFriends();
+    renderFriendRanking();
+    refreshFriendSearchResults();
+    toast('Amigo removido.','warn');
+  } catch (error) {
+    toast(_fbErr(error), 'err');
+  }
+}
+
+// ── CLOUD SAVE UI ────────────────────────────────────────────
+function manualCloudSave() {
+  updateCloudStatus('sync');
+  const snap = cloudSave();
+  setTimeout(() => updateCloudStatus(snap?'ok':'err'), 800);
+  toast('💾 Jogo salvo!', 'ok');
+}
+
+// ── RANK LOAD MORE ────────────────────────────────────────────
+async function loadMoreRanking() {
+  if (!_fbConfigured) return;
+  await loadRankingFromFirestore(currentRankFilter, true);
+  safeCall('renderRanking');
+}
+
+// ── ADMIN ACTIONS ─────────────────────────────────────────────
+function adminAddMoney() {
+  G.money += 50000;
+  addLog('🔧 Admin: +R$50.000', 'gold');
+  toast('💰 +R$50.000 adicionados!', 'gold');
+  updateHUD();
+}
+
+function adminAddCow(breedId) {
+  const bd = BREEDS.find(b=>b.id===(breedId||'nelore'))||BREEDS[0];
+  const cow = createCow(bd, 'f', false);
+  G.cows.push(cow);
+  addLog(`🔧 Admin: +${cow.name} (${bd.name})`, 'gold');
+  toast(`🐄 ${cow.name} adicionada!`, 'ok');
+  updateHUD();
+  renderFarm();
+}
+
+function adminFastForward(days) {
+  for (let i=0;i<days;i++) nextDay();
+  toast(`⏭ Avançou ${days} dias!`, 'gold');
+}
+
+function adminBoostGen() {
+  G.cows.forEach(c=>c.gen=Math.min(100,c.gen+20));
+  addLog('🔧 Admin: +20pts genética geral', 'gold');
+  toast('🧬 +20pts genética para todo o rebanho!', 'gold');
+  updateHUD();
+  renderFarm();
+}
+
+function resetGame() {
+  const uid = CURRENT_USER?.id||CURRENT_USER?.uid;
+  if (uid) localStorage.removeItem('ps_save_'+uid);
+  location.reload();
+}
+
+// ── BOOT ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+
+  // Init weather and season
+  currentSeason  = getCurrentSeason();
+  currentWeather = pickWeather();
+
+  // Attempt silent login from localStorage session
+  const sess = (() => {
+    try { return JSON.parse(localStorage.getItem('ps_session')||'null'); } catch { return null; }
+  })();
+
+  if (sess && sess.id) {
+    // Reload save
+    const saveKey = 'ps_save_' + sess.id;
+    const raw = localStorage.getItem(saveKey);
+    if (raw) {
+      try {
+        const saved = JSON.parse(raw);
+        if (saved && typeof saved === 'object') {
+          Object.assign(G, saved);
+          // Restore cow objects (ensure phase and sell are fresh)
+          G.cows.forEach(c => {
+            c.phase = getCowPhase(c);
+            const bd = BREEDS.find(b=>b.id===c.breedId)||BREEDS[0];
+            c.sell  = computeSellValue(c, bd);
+            c.dailyCost = c.weight * 0.008;
+          });
+        }
+      } catch(e) { console.warn('Save load error:', e); }
+    }
+
+    // Reconstruct user
+    const users = (() => { try { return JSON.parse(localStorage.getItem('ps_users')||'[]'); } catch{return[];} })();
+    const found = users.find(u=>u.id===sess.id) || { id:sess.id, username:sess.username, farmName:'Minha Fazenda', avatar:(sess.username||'F')[0].toUpperCase(), region:'BR' };
+    CURRENT_USER = found;
+
+    // Load achievements
+    try {
+      const ach = JSON.parse(localStorage.getItem('ps_ach_'+sess.id)||'[]');
+      unlockedAchievements = new Set(ach);
+    } catch {}
+
+    loginSuccess(found);
+  }
+
+  // Initial render of market (visible even before login for reference)
+  renderMktLive();
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.key==='Escape') {
+      closeDsheet();
+      closeProfile();
+      closeBuySheet();
+      closeFriendInvite();
+      document.getElementById('notif-panel')?.classList.remove('open');
+      document.getElementById('admin-panel')?.classList.remove('open');
+    }
+  });
+
+  // Close notif panel on click outside
+  document.addEventListener('click', e => {
+    const np = document.getElementById('notif-panel');
+    const bell = document.getElementById('notif-bell');
+    if (np?.classList.contains('open') && !np.contains(e.target) && !bell?.contains(e.target)) {
+      np.classList.remove('open');
+    }
+  });
+
+  console.info('🐄 Pecuária Sim v2.0 — Engine pronta!');
+  setTimeout(() => {
+    const ss = document.getElementById('splash-screen');
+    if (!ss) return;
+    ss.style.opacity = '0';
+    setTimeout(() => ss.remove(), 1000);
+  }, 1500);
+});
+
+// ── OVERRIDE loginSuccess to also update avatar char ─────────
+const _origLoginSuccess = window.loginSuccess || function(){};
+window.loginSuccess = function(user) {
+  const char = document.getElementById('topbar-user-char');
+  if (char) char.textContent = user?.avatar || (user?.username||'F')[0].toUpperCase();
+  // Set mode indicator
+  const mode = document.getElementById('srv-mode');
+  if (mode) mode.textContent = _fbConfigured ? '🟢 cloud' : '🟡 local';
+  updateWeatherStrip();
+  _origLoginSuccess(user);
+  // Initial renders
+  setTimeout(() => {
+    updateHUD();
+    renderFarm();
+    renderMktLive();
+    renderGlobalFeed();
+    renderFriendRequests();
+    renderFriends();
+    safeCall('renderRanking');
+  }, 300);
+};
+
+// ── EXPOSE GLOBALS ───────────────────────────────────────────
+Object.assign(window, {
+  authSwitchTab, switchPanel, switchShopTab, setRankFilter,
+  filterPhase, openDsheet, closeDsheet, openBuySheet, closeBuySheet,
+  openProfile, closeProfile, openFriendInvite, closeFriendInvite,
+  openAdminPanel, toggleNotifPanel, clearNotifs,
+  buyAnimal, sellAnimal, sellMilkUI, buyVaccineUI, buyFeed,
+  callVet, buyVitamins, buyGenetics, buyGeneticItem,
+  nextDayUI, manualCloudSave, loadMoreRanking,
+  renameCow, visitFarm, removeFriend, acceptFriend, rejectFriend,
+  adminAddMoney, adminAddCow, adminFastForward, adminBoostGen, resetGame,
+  renderFarm, renderMktLive, renderGlobalFeed, renderFriendRequests, renderFriends,
+  renderFriendRanking, checkAchievements, updateSeasonUI,
+  BREEDS, MKT, G, RANK_SEED,
+});
+</script>
+
+</body>
+</html>
